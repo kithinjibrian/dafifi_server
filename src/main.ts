@@ -10,7 +10,7 @@ async function bootstrap() {
 
     app.enableCors({
         origin: [
-            'https://app.dafifi.net',
+            'https://chat.dafifi.net',
             'http://localhost:4000',
         ],
         credentials: true,
