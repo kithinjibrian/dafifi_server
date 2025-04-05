@@ -48,7 +48,7 @@ services:
     networks:
       - net
     depends_on:
-      - certbot
+      - app
 
   certbot:
     image: certbot/certbot
