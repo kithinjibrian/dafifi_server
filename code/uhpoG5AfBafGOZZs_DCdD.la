@@ -1,5 +1,0 @@
-use std::io::{ print };
-use std::fetch::{ get };
-fun main(): number { let res = get("https://jsonplaceholder.typicode.com/todos/1");
-print("{}",res);
-return res; }

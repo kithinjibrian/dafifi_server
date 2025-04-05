@@ -1,2 +1,0 @@
-use std::io::{ print };
-fun main(): unit { print("{}", 90); }
