@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ErrorModule } from './error/error.module';
 
 @Module({
     imports: [
@@ -14,6 +15,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         ChatModule,
         UsersModule,
         AuthModule,
+        ErrorModule,
         ConfigModule.forRoot({
             isGlobal: true,
         }),
