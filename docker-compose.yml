@@ -46,7 +46,7 @@ services:
     networks:
       - net
     depends_on:
-      - nginx
+      - app
 
 volumes:
   mysql-data:
