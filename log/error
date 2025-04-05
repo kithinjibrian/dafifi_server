@@ -1,0 +1,127 @@
+
+---------------------
+use std::io::{ print };
+std::fetch::{ get };
+fun main(): unit { let res = get("https:google.com"); print("{}",res); }
+
+Error: Expected an identifer at line 2, column 13
+---------------------
+                
+---------------------
+use std::io::{ print };
+std::fetch::{ get };
+fun main(): unit { let res = get("https:google.com");
+print("{}",res); }
+
+Error: Expected an identifer at line 2, column 13
+---------------------
+                
+---------------------
+use std::io::{ print };
+use std::fetch::{ get };
+fun main(): number { let res = get("https://jsonplaceholder.typicode.com/todos/1");
+print("{}",res);
+return res; }
+
+Error: Stack underflow - argument evaluation
+---------------------
+                
+---------------------
+ use std::io::{ print };
+ use std::fetch::{ post };
+ 
+ struct Resource {
+     id: number;
+     title: string;
+     body: string;
+     userId: number;
+ }
+ 
+ fun main(): Resource {
+     let res = post("https://jsonplaceholder.typicode.com/posts", {
+         title: "foo",
+         body: "bar",
+         userId: 1,
+     }, {
+         headers: {
+             "Content-Type": "application/json; charset=UTF-8",
+         }
+     });
+ 
+     print("{}", res);
+ 
+ This code creates a resource.
+ 
+
+
+Error: Expected ';' after expression at line 24, column 7
+---------------------
+                
+---------------------
+ use std::io::{ print };
+ struct Resource {
+     id: number;
+     let res = post("https://jsonplaceholder.typicode.com/posts", {
+         title: "foo",
+         body: "bar",
+         userId: 1,
+     }, {
+         headers: {
+             "Content-Type": "application/json; charset=UTF-8",
+         }
+     });
+ 
+     print("{}", res);
+ 
+     return res;
+ }
+
+
+Error: Expected an identifer at line 4, column 6
+---------------------
+                
+---------------------
+ use std::io::{ print };
+ use std::fetch::{ post };
+ 
+     body: string;
+         body: "bar",
+         userId: 1,
+     }, {
+         }
+     });
+ 
+ This code creates a resource.
+ 
+
+
+Error: Expected ';' after expression at line 4, column 10
+---------------------
+                
+---------------------
+ use std::io::{ print };
+ use std::fetch::{ post };
+ 
+ struct Resource {
+     id: number;
+     title: string;
+     body: string;
+     userId: number;
+         title: "foo",
+         body: "bar",
+         userId: 1,
+     }, {
+         headers: {
+             "Content-Type": "application/json; charset=UTF-8",
+         }
+     });
+ 
+     print("{}", res);
+ 
+     return res;
+ }
+
+
+Error: Expected ';' after field declaration at line 9, column 17
+---------------------
+                

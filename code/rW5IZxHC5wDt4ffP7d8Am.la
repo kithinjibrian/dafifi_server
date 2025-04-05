@@ -1,0 +1,21 @@
+ use std::io::{ print };
+ use std::fetch::{ post };
+ 
+ struct Resource {
+     id: number;
+     title: string;
+     body: string;
+     userId: number;
+         title: "foo",
+         body: "bar",
+         userId: 1,
+     }, {
+         headers: {
+             "Content-Type": "application/json; charset=UTF-8",
+         }
+     });
+ 
+     print("{}", res);
+ 
+     return res;
+ }

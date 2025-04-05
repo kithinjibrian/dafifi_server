@@ -1,0 +1,4 @@
+use std::io::{ print };
+use std::fetch::{ get };
+fun main(): unit { let res = get("https://jsonplaceholder.typicode.com/todos/1");
+print("{}",res); }
