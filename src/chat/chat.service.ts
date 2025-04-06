@@ -151,7 +151,7 @@ export class ChatService {
                         JSON.stringify({
                             message_id: aiMessage.id,
                             chunk: chunkStr,
-                        })
+                        }) + "\n"
                     );
 
                 } catch (e) {
