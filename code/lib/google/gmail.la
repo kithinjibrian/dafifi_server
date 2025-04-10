@@ -1,0 +1,7 @@
+fun list(config: Map<string, string>): unit {
+    return __google_list__(config);
+}
+
+fun read(id: string): unit {
+    return __google_read__(id);
+}

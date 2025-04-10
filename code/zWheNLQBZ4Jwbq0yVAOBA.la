@@ -1,0 +1,6 @@
+import lib;
+use lib::google::gmail::{ list };
+use std::io::{ print };
+fun main(): unit {
+    return list({q: "label:INBOX", max_results: 2});
+}
