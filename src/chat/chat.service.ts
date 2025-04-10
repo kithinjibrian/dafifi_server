@@ -25,7 +25,8 @@ export class ChatService {
         @InjectRepository(Message)
         private messageRepository: Repository<Message>,
         private usersService: UsersService
-    ) { }
+    ) {
+    }
 
     private capitalize(str) {
         return str.charAt(0).toUpperCase() + str.slice(1);

@@ -5,6 +5,7 @@ import { exec } from "@kithinji/tlugha"
 import { CreateActionDto } from './dto/create-action.dto';
 import { UpdateActionDto } from './dto/update-action.dto';
 import { ChatService } from 'src/chat/chat.service';
+import { builtin } from '@kithinji/tlugha'
 
 @Injectable()
 export class ActionService {
@@ -13,20 +14,19 @@ export class ActionService {
     ) { }
 
     async create(createActionDto: CreateActionDto, username: string) {
-        createActionDto.code = `import lib;
-
-use lib::google::auth::{ url };
-use std::io::{ print };
-
-fun main(): unit {
-    print("{}", url());
-}
-        `;
         let name = `code/${nanoid()}.la`;
         await writeFile(name, createActionDto.code);
 
+        builtin["__username__"] = {
+            type: "variable",
+            signature: "string",
+            value: username
+        }
+
         try {
             const result = exec(name);
+
+            return result;
 
             // return await this.chatService.tool_prompt({
             //     message: result ? `Result from tool.\n\`\`\`json\n${JSON.stringify(result, null, 2)}\n\`\`\`` : "Tool returned empty result!",

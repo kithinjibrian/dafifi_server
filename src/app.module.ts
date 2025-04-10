@@ -8,6 +8,8 @@ import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ErrorModule } from './error/error.module';
+import { GoogleModule } from './google/google.module';
+import { BuiltinModule } from './builtin/builtin.module';
 
 @Module({
     imports: [
@@ -16,6 +18,8 @@ import { ErrorModule } from './error/error.module';
         UsersModule,
         AuthModule,
         ErrorModule,
+        GoogleModule,
+        BuiltinModule,
         ConfigModule.forRoot({
             isGlobal: true,
         }),

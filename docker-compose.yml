@@ -39,6 +39,20 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
       timeout: 20s
       retries: 10
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "8080:80"
+    networks:
+      - net
       
   nginx:
     image: nginx:latest
@@ -54,13 +68,15 @@ services:
     depends_on:
       - app
 
-  # certbot:
-  #   image: certbot/certbot
-  #   container_name: certbot
-  #   volumes: 
-  #     - ./certbot/conf:/etc/letsencrypt
-  #     - ./certbot/www:/var/www/certbot
-  #   command: certonly --webroot -w /var/www/certbot --force-renewal --email kithinjibrian369@gmail.com -d api.dafifi.net --agree-tos
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes: 
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    command: certonly --webroot -w /var/www/certbot --force-renewal --email kithinjibrian369@gmail.com -d api.dafifi.net -d mysql.dafifi.net --agree-tos
+    depends_on:
+      - nginx
 
 volumes:
   mysql-data:
