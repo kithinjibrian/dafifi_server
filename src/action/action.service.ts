@@ -23,7 +23,8 @@ export class ActionService {
                 message: result ? `Result from tool.\n\`\`\`json\n${JSON.stringify(result, null, 2)}\n\`\`\`` : "Tool returned empty result!",
                 sender: "tool",
                 chat_id: createActionDto.chat_id,
-                time: ""
+                time: "",
+                mock: true
             }, username);
         } catch (error) {
             await appendFile("log/error", `
@@ -37,7 +38,8 @@ ${error}
                 message: `Error from tool.\n\`\`\`text\n${error}\n\`\`\``,
                 sender: "tool",
                 chat_id: createActionDto.chat_id,
-                time: ""
+                time: "",
+                mock: true
             }, username)
         }
     }

@@ -27,6 +27,10 @@ export class ChatService {
         private usersService: UsersService
     ) { }
 
+    private capitalize(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
     private async getAuthToken() {
         const currentTime = Date.now();
         if (this.token && this.tokenExpiration && currentTime < this.tokenExpiration) {
@@ -78,7 +82,7 @@ export class ChatService {
     }
 
     async prompt(createMessageDto: CreateMessageDto, username: string): Promise<Readable> {
-        const { id, message, sender, time, chat_id } = createMessageDto;
+        const { id, message, sender, time, chat_id, mock } = createMessageDto;
 
         try {
             let chat: Chat = await this.getChat(chat_id, message.slice(0, 20), username);
@@ -101,7 +105,7 @@ export class ChatService {
             }
 
             const msgs = await this.findOne(chat.id, username);
-            const prompt = msgs.messages.map((msg) => `< | ${msg.sender} | > ${msg.message}`).join(" ");
+            const prompt = msgs.messages.map((msg) => `< | ${this.capitalize(msg.sender)} | > ${msg.message}`).join(" ");
 
             const aiMessage = this.messageRepository.create({
                 message: '',
@@ -126,7 +130,7 @@ export class ChatService {
                 }) + '\n'
             );
 
-            const response = await axios.post("https://kithinji-dafifi.hf.space/mock",
+            const response = await axios.post(`https://kithinji-dafifi.hf.space/${mock ? "mock" : "generate"}`,
                 {
                     prompt,
                     max_tokens: 100,
@@ -201,6 +205,8 @@ export class ChatService {
 
             return toolMessage;
         } catch (error) {
+            console.log(error);
+
             throw new HttpException(
                 'An error occurred while processing the message',
                 HttpStatus.INTERNAL_SERVER_ERROR

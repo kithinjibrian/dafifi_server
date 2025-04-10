@@ -2,8 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { builtin } from '@kithinji/tlugha'
 
 import { AppModule } from './app.module';
+import { ChatService } from './chat/chat.service';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -34,6 +36,11 @@ async function bootstrap() {
     const documentFactory = () => SwaggerModule.createDocument(app, config);
 
     SwaggerModule.setup('api', app, documentFactory);
+
+    // const chatService = app.get(ChatService)
+    // const chat = chatService.();
+
+    console.log(builtin)
 
     await app.listen(process.env.PORT ?? 3000);
 }

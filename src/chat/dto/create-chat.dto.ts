@@ -16,6 +16,9 @@ export class CreateMessageDto {
 
     @IsString()
     time: string;
+
+    @IsBoolean()
+    mock: boolean;
 }
 
 export class DeleteChatsDto {
