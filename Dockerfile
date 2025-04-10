@@ -1,6 +1,8 @@
 # Development Stage
 FROM node:22 AS development
 
+ENV NODE_OPTIONS=--max-old-space-size=4096
+
 WORKDIR /usr/src/app
 
 COPY package*.json ./
@@ -18,6 +20,7 @@ FROM node:22 AS production
 
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 WORKDIR /usr/src/app
 

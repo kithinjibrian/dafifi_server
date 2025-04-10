@@ -13,19 +13,28 @@ export class ActionService {
     ) { }
 
     async create(createActionDto: CreateActionDto, username: string) {
+        createActionDto.code = `import lib;
+
+use lib::google::auth::{ url };
+use std::io::{ print };
+
+fun main(): unit {
+    print("{}", url());
+}
+        `;
         let name = `code/${nanoid()}.la`;
         await writeFile(name, createActionDto.code);
 
         try {
             const result = exec(name);
 
-            return await this.chatService.tool_prompt({
-                message: result ? `Result from tool.\n\`\`\`json\n${JSON.stringify(result, null, 2)}\n\`\`\`` : "Tool returned empty result!",
-                sender: "tool",
-                chat_id: createActionDto.chat_id,
-                time: "",
-                mock: true
-            }, username);
+            // return await this.chatService.tool_prompt({
+            //     message: result ? `Result from tool.\n\`\`\`json\n${JSON.stringify(result, null, 2)}\n\`\`\`` : "Tool returned empty result!",
+            //     sender: "tool",
+            //     chat_id: createActionDto.chat_id,
+            //     time: "",
+            //     mock: true
+            // }, username);
         } catch (error) {
             await appendFile("log/error", `
 ---------------------
@@ -34,13 +43,13 @@ ${createActionDto.code}
 ${error}
 ---------------------
                 `);
-            return await this.chatService.tool_prompt({
-                message: `Error from tool.\n\`\`\`text\n${error}\n\`\`\``,
-                sender: "tool",
-                chat_id: createActionDto.chat_id,
-                time: "",
-                mock: true
-            }, username)
+            // return await this.chatService.tool_prompt({
+            //     message: `Error from tool.\n\`\`\`text\n${error}\n\`\`\``,
+            //     sender: "tool",
+            //     chat_id: createActionDto.chat_id,
+            //     time: "",
+            //     mock: true
+            // }, username)
         }
     }
 

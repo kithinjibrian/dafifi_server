@@ -3,6 +3,9 @@
 /node_modules
 /build
 /certbot
+/code
+
+/credentials.json
 
 # Logs
 logs
