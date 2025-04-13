@@ -1,3 +1,0 @@
-fun main(): string {
-    return "Mock response from tool";
-}

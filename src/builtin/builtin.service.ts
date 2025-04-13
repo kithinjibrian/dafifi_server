@@ -36,7 +36,10 @@ export class BuiltinService implements OnModuleInit {
                 return oAuth2Client.generateAuthUrl({
                     access_type: 'offline',
                     prompt: 'consent',
-                    scope: ['https://www.googleapis.com/auth/gmail.readonly'],
+                    scope: [
+                        'https://www.googleapis.com/auth/gmail.readonly',
+                        'https://www.googleapis.com/auth/gmail.send'
+                    ],
                     state: id,
                 });
             }
@@ -137,6 +140,62 @@ export class BuiltinService implements OnModuleInit {
                     return decodedBody;
                 } catch (error) {
                     console.error('Error reading Gmail message:', error);
+                    throw error;
+                }
+            }
+        };
+
+        builtin["__google_send__"] = {
+            type: "function",
+            async: true,
+            signature: "<T, U>(args: T) -> U",
+            exec: async (args: any[]) => {
+                let token;
+
+                if (builtin.__username__.type === "variable") {
+                    token = await this.gtokenRepository.findOne({
+                        where: { username: builtin.__username__.value }
+                    });
+                }
+
+                if (!token || !token.refresh_token) {
+                    throw new Error('No refresh token found.');
+                }
+
+                try {
+                    oAuth2Client.setCredentials({ refresh_token: token.refresh_token });
+
+                    const gm = gmail.gmail({ version: 'v1', auth: oAuth2Client });
+
+                    const to = args[0].to;
+                    const subject = args[0].subject;
+                    const body = args[0].body;
+
+                    const rawMessage = [
+                        `To: ${to}`,
+                        'Content-Type: text/plain; charset="UTF-8"',
+                        'MIME-Version: 1.0',
+                        `Subject: ${subject}`,
+                        '',
+                        body,
+                    ].join('\n');
+
+                    const encodedMessage = Buffer.from(rawMessage)
+                        .toString('base64')
+                        .replace(/\+/g, '-')
+                        .replace(/\//g, '_')
+                        .replace(/=+$/, '');
+
+                    const res = await gm.users.messages.send({
+                        userId: 'me',
+                        requestBody: {
+                            raw: encodedMessage,
+                        },
+                    });
+
+                    return { status: 'sent', id: res.data.id };
+                } catch (error) {
+                    console.error('Failed to send email:', error);
                     throw error;
                 }
             }

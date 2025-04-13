@@ -1,7 +1,0 @@
-import lib;
-
-use lib::google::gmail::{ list };
-
-fun main(): string {
-    return list({q:"is:unread", max_results: 5});
-}

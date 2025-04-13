@@ -27,8 +27,6 @@ export class ActionService {
         try {
             const result = await exec(name);
 
-            await rename(name, `dead/${filename}.la`)
-
             let res = `p { "Result from tool." }
 code[lang="text"] {
 \`
@@ -36,7 +34,6 @@ ${JSON.stringify(result, null, 2)}
 \`
 }
 `
-
             return await this.chatService.tool_prompt({
                 message: result ? res : "p { \"Tool returned empty result!\" }",
                 sender: "tool",
@@ -45,18 +42,12 @@ ${JSON.stringify(result, null, 2)}
                 mock: true
             }, username);
         } catch (error) {
-            await appendFile("log/error", `
----------------------
-${createActionDto.code}
-
-${error}
----------------------
-                `);
+            console.log(error);
             return await this.chatService.tool_prompt({
                 message: `p { "Error from tool" }
 code[lang="text"] {
 \`
-${error}
+${error.message}
 \`
 }
 `,
@@ -65,6 +56,8 @@ ${error}
                 time: "",
                 mock: true
             }, username)
+        } finally {
+            await rename(name, `dead/${filename}.la`)
         }
     }
 

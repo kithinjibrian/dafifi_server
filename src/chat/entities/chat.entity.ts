@@ -7,8 +7,9 @@ import {
     PrimaryGeneratedColumn,
     UpdateDateColumn
 } from "typeorm";
-import { Message } from "./message.entity";
+
 import { User } from "src/users/entities/users.entity";
+import { Message } from "src/message/entities/message.entity";
 
 @Entity('chat')
 export class Chat {

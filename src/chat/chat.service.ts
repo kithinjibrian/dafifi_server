@@ -5,9 +5,8 @@ import { UpdateChatDto } from './dto/update-chat.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Chat } from './entities/chat.entity';
-import { Message } from './entities/message.entity';
-import { Readable } from 'stream';
 import { UsersService } from 'src/users/users.service';
+import { Message } from 'src/message/entities/message.entity';
 
 enum Sender {
     User = 'user',
@@ -82,7 +81,7 @@ export class ChatService {
         }
     }
 
-    async prompt(createMessageDto: CreateMessageDto, username: string): Promise<Readable> {
+    async *prompt(createMessageDto: CreateMessageDto, username: string): AsyncGenerator<string> {
         const { id, message, sender, time, chat_id, mock } = createMessageDto;
 
         try {
@@ -98,7 +97,7 @@ export class ChatService {
                 });
                 await this.messageRepository.save(utMessage);
             } else if (sender === "tool") {
-                utMessage = this.messageRepository.findOne({
+                utMessage = await this.messageRepository.findOne({
                     where: {
                         id
                     }
@@ -117,68 +116,50 @@ export class ChatService {
 
             await this.messageRepository.save(aiMessage);
 
-            const stream = new Readable({
-                read() { },
-                highWaterMark: 1024
-            });
+            yield JSON.stringify({
+                chat_id: chat.id,
+                umessage_id: utMessage.id,
+                imessage_id: aiMessage.id
+            }) + '\n'
 
-            // Initial response with IDs
-            stream.push(
-                JSON.stringify({
-                    chat_id: chat.id,
-                    umessage_id: utMessage.id,
-                    imessage_id: aiMessage.id
-                }) + '\n'
-            );
-
-            const response = await axios.post(`https://kithinji-dafifi.hf.space/${mock ? "mock" : "generate"}`,
-                {
+            const response = await fetch("https://kithinji-dafifi.hf.space/mock", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
                     prompt: message,
                     max_tokens: 100,
                     stream: true
-                },
-                {
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    responseType: 'stream'
-                }
-            );
+                })
+            })
 
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
 
             let ai_response = '';
-            response.data.on('data', async (chunk) => {
-                try {
-                    const chunkStr = chunk.toString();
-                    ai_response += chunkStr;
 
-                    stream.push(
-                        JSON.stringify({
-                            message_id: aiMessage.id,
-                            chunk: chunkStr,
-                        }) + "\n"
-                    );
+            while (reader) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    break;
+                };
 
-                } catch (e) {
-                    console.log(e)
-                    stream.push(null);
-                }
+                const chunk = decoder.decode(value);
 
-            });
+                if (chunk.trim() === "[DONE]")
+                    break;
 
-            response.data.on('end', () => {
-                aiMessage.message = ai_response;
-                this.messageRepository.save(aiMessage);
+                ai_response += chunk;
 
-                stream.push(null);
-            });
+                yield JSON.stringify({
+                    message_id: aiMessage.id,
+                    chunk,
+                }) + '\n'
+            }
 
-            response.data.on('error', (error) => {
-                console.error('Stream error:', error);
-                stream.push(null);
-            });
-
-            return stream;
+            aiMessage.message = ai_response;
+            await this.messageRepository.save(aiMessage);
 
         } catch (error) {
             console.log(error)
@@ -308,3 +289,33 @@ export class ChatService {
         }
     }
 }
+
+/*
+
+ let ai_response = '';
+            response.data.on('data', async (chunk) => {
+                try {
+                    const chunkStr = chunk.toString();
+                    ai_response += chunkStr;
+
+                    stream.push(
+                        JSON.stringify({
+                            message_id: aiMessage.id,
+                            chunk: chunkStr,
+                        }) + "\n"
+                    );
+
+                } catch (e) {
+                    console.log(e)
+                    stream.push(null);
+                }
+
+            });
+
+            response.data.on('end', () => {
+                aiMessage.message = ai_response;
+                this.messageRepository.save(aiMessage);
+
+                stream.push(null);
+            });
+*/

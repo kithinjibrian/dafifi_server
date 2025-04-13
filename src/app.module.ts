@@ -10,6 +10,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ErrorModule } from './error/error.module';
 import { GoogleModule } from './google/google.module';
 import { BuiltinModule } from './builtin/builtin.module';
+import { MessageModule } from './message/message.module';
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { BuiltinModule } from './builtin/builtin.module';
         ErrorModule,
         GoogleModule,
         BuiltinModule,
+        MessageModule,
         ConfigModule.forRoot({
             isGlobal: true,
         }),

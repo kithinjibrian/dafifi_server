@@ -1,8 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Res, Request, UseGuards } from '@nestjs/common';
+import {
+    Controller,
+    Sse,
+    Req,
+    Query,
+    MessageEvent,
+    Get,
+    Post,
+    Body,
+    Patch,
+    Param,
+    Delete,
+    Res,
+    Request,
+    UseGuards
+} from '@nestjs/common';
+import { Observable } from 'rxjs';
 import { ChatService } from './chat.service';
 import { DeleteChatsDto, CreateMessageDto, StarChatsDto } from './dto/create-chat.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
-import { Response } from 'express';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @Controller('chat')
@@ -10,13 +25,35 @@ export class ChatController {
     constructor(private readonly chatService: ChatService) { }
 
     @UseGuards(JwtAuthGuard)
-    @Post()
-    async prompt(@Res() res: Response, @Request() req, @Body() createMessageDto: CreateMessageDto) {
-        const stream = await this.chatService.prompt(createMessageDto, req.user.username);
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        stream.pipe(res);
+    @Sse('prompt')
+    prompt(
+        @Request() req,
+        @Query() query: any
+    ): Observable<MessageEvent> {
+        return new Observable<MessageEvent>((subscriber) => {
+            // Wrap the async logic in an IIFE
+            (async () => {
+                try {
+                    const stream = this.chatService.prompt(
+                        query,
+                        (req as any).user.username,
+                    );
+
+                    for await (const chunk of stream) {
+                        subscriber.next({ data: chunk });
+                    }
+
+                    subscriber.complete();
+                } catch (error) {
+                    subscriber.error(error);
+                }
+            })();
+
+            // Teardown logic if needed (e.g. abort controller)
+            return () => {
+                // Optional cleanup logic when client disconnects
+            };
+        });
     }
 
     @UseGuards(JwtAuthGuard)

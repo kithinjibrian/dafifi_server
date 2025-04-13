@@ -5,3 +5,7 @@ fun list(config: Map<string, string>): unit {
 fun read(id: string): unit {
     return __google_read__(id);
 }
+
+fun send(config: Map<string, string>): unit {
+    return __google_send__(config);
+}
