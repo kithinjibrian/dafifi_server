@@ -8,10 +8,10 @@ import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 export class ActionController {
     constructor(private readonly actionService: ActionService) { }
 
-    //@UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard)
     @Post()
     create(@Request() req, @Body() createActionDto: CreateActionDto) {
-        return this.actionService.create(createActionDto, "req.user.username");
+        return this.actionService.create(createActionDto, req.user.username);
     }
 
     @Get()

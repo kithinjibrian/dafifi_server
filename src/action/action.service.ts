@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import { writeFile, appendFile } from 'fs/promises';
+import { writeFile, appendFile, rename } from 'fs/promises';
 import { Injectable } from '@nestjs/common';
 import { exec } from "@kithinji/tlugha"
 import { CreateActionDto } from './dto/create-action.dto';
@@ -14,7 +14,8 @@ export class ActionService {
     ) { }
 
     async create(createActionDto: CreateActionDto, username: string) {
-        let name = `code/${nanoid()}.la`;
+        let filename = nanoid();
+        let name = `code/${filename}.la`;
         await writeFile(name, createActionDto.code);
 
         builtin["__username__"] = {
@@ -24,17 +25,25 @@ export class ActionService {
         }
 
         try {
-            const result = exec(name);
+            const result = await exec(name);
 
-            return result;
+            await rename(name, `dead/${filename}.la`)
 
-            // return await this.chatService.tool_prompt({
-            //     message: result ? `Result from tool.\n\`\`\`json\n${JSON.stringify(result, null, 2)}\n\`\`\`` : "Tool returned empty result!",
-            //     sender: "tool",
-            //     chat_id: createActionDto.chat_id,
-            //     time: "",
-            //     mock: true
-            // }, username);
+            let res = `p { "Result from tool." }
+code[lang="text"] {
+\`
+${JSON.stringify(result, null, 2)}
+\`
+}
+`
+
+            return await this.chatService.tool_prompt({
+                message: result ? res : "p { \"Tool returned empty result!\" }",
+                sender: "tool",
+                chat_id: createActionDto.chat_id,
+                time: "",
+                mock: true
+            }, username);
         } catch (error) {
             await appendFile("log/error", `
 ---------------------
@@ -43,13 +52,19 @@ ${createActionDto.code}
 ${error}
 ---------------------
                 `);
-            // return await this.chatService.tool_prompt({
-            //     message: `Error from tool.\n\`\`\`text\n${error}\n\`\`\``,
-            //     sender: "tool",
-            //     chat_id: createActionDto.chat_id,
-            //     time: "",
-            //     mock: true
-            // }, username)
+            return await this.chatService.tool_prompt({
+                message: `p { "Error from tool" }
+code[lang="text"] {
+\`
+${error}
+\`
+}
+`,
+                sender: "tool",
+                chat_id: createActionDto.chat_id,
+                time: "",
+                mock: true
+            }, username)
         }
     }
 

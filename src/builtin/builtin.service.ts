@@ -20,7 +20,7 @@ export class BuiltinService implements OnModuleInit {
         const { client_id, client_secret, redirect_uris } = credentials.web;
         const oAuth2Client = new gmail.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
 
-        builtin["__google_auth__"] = {
+        builtin["__google_login__"] = {
             type: "function",
             async: true,
             signature: "<T, U>(args: T) -> U",

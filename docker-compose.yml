@@ -68,15 +68,15 @@ services:
     depends_on:
       - app
 
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes: 
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --force-renewal --email kithinjibrian369@gmail.com -d api.dafifi.net -d mysql.dafifi.net --agree-tos
-    depends_on:
-      - nginx
+  # certbot:
+  #   image: certbot/certbot
+  #   container_name: certbot
+  #   volumes: 
+  #     - ./certbot/conf:/etc/letsencrypt
+  #     - ./certbot/www:/var/www/certbot
+  #   command: certonly --webroot -w /var/www/certbot --force-renewal --email kithinjibrian369@gmail.com -d mysql.dafifi.net --agree-tos
+  #   depends_on:
+  #     - nginx
 
 volumes:
   mysql-data:

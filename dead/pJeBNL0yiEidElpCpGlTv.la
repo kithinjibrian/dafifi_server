@@ -1,0 +1,8 @@
+import lib;
+ 
+ use lib::google::auth::{ login };
+ 
+ fun main(): string {
+     return login();
+ }
+ 

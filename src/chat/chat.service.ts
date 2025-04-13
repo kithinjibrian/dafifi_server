@@ -133,7 +133,7 @@ export class ChatService {
 
             const response = await axios.post(`https://kithinji-dafifi.hf.space/${mock ? "mock" : "generate"}`,
                 {
-                    prompt,
+                    prompt: message,
                     max_tokens: 100,
                     stream: true
                 },
