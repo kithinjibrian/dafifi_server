@@ -1,30 +1,31 @@
+// notion-token.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
-@Entity('google_tokens')
-export class GToken {
+@Entity('notion_tokens')
+export class NotionToken {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
     @Column({ unique: true })
     username: string;
 
-    @Column()
-    email: string;
-
-    @Column()
+    @Column({ type: 'text' })
     access_token: string;
 
-    @Column()
-    refresh_token: string;
+    @Column({ nullable: true })
+    workspace_id: string;
 
     @Column({ nullable: true })
-    scope: string;
+    workspace_name: string;
 
     @Column({ nullable: true })
-    token_type: string;
+    bot_id: string;
 
-    @Column({ type: 'bigint', nullable: true })
-    expiry_date: number; // In ms since epoch
+    @Column({ default: true })
+    is_active: boolean;
+
+    @Column({ nullable: true, type: 'timestamp' })
+    expiry_date: Date;
 
     @CreateDateColumn()
     createdAt: Date;
@@ -32,4 +33,3 @@ export class GToken {
     @UpdateDateColumn()
     updatedAt: Date;
 }
-

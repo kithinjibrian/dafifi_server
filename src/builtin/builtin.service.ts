@@ -7,12 +7,18 @@ import { GToken } from 'src/google/entities/google.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { builtin } from "@kithinji/tlugha"
+import { RedisService } from 'src/redis/redis.service';
+import { NotionToken } from 'src/notion/entities/notion.entity';
+import { Client } from "@notionhq/client"
 
 @Injectable()
 export class BuiltinService implements OnModuleInit {
     constructor(
         @InjectRepository(GToken)
         private gtokenRepository: Repository<GToken>,
+        @InjectRepository(NotionToken)
+        private notionTokenRepository: Repository<NotionToken>,
+        private readonly redisService: RedisService
     ) { }
 
     onModuleInit() {
@@ -198,6 +204,54 @@ export class BuiltinService implements OnModuleInit {
                     console.error('Failed to send email:', error);
                     throw error;
                 }
+            }
+        };
+
+        builtin["__notion_login__"] = {
+            type: "function",
+            async: true,
+            signature: "<T, U>(args: T) -> U",
+            exec: async (args: any[]) => {
+                const id = nanoid();
+
+                if (
+                    builtin["__username__"].type == "variable" &&
+                    builtin["__chat_id__"].type == "variable"
+                ) {
+                    await this.redisService.set(id, JSON.stringify({
+                        username: builtin["__username__"].value,
+                        chat_id: builtin["__chat_id__"].value
+                    }));
+                }
+
+                return `https://api.notion.com/v1/oauth/authorize?client_id=1d6d872b-594c-8069-b6a5-00370aabad4b&response_type=code&owner=user&redirect_uri=https%3A%2F%2Fapi.dafifi.net%2Fnotion&state=${id}`
+            }
+        };
+
+        builtin["__notion_search__"] = {
+            type: "function",
+            async: true,
+            signature: "<T, U>(args: T) -> U",
+            exec: async (args: any[]) => {
+                let token;
+
+                if (
+                    builtin["__username__"].type == "variable"
+                ) {
+                    token = await this.notionTokenRepository.findOne({
+                        where: { username: builtin.__username__.value }
+                    });
+                }
+
+                if (!token) return "Notion authentication error";
+
+                const notion = new Client({
+                    auth: token.access_token
+                });
+
+                const databases = await notion.search(args[0]);
+
+                return JSON.stringify(databases.results, null, 2);
             }
         };
     }

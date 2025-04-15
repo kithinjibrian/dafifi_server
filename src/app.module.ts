@@ -11,6 +11,8 @@ import { ErrorModule } from './error/error.module';
 import { GoogleModule } from './google/google.module';
 import { BuiltinModule } from './builtin/builtin.module';
 import { MessageModule } from './message/message.module';
+import { NotionModule } from './notion/notion.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
     imports: [
@@ -22,6 +24,8 @@ import { MessageModule } from './message/message.module';
         GoogleModule,
         BuiltinModule,
         MessageModule,
+        NotionModule,
+        RedisModule,
         ConfigModule.forRoot({
             isGlobal: true,
         }),

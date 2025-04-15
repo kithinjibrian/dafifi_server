@@ -24,6 +24,12 @@ export class ActionService {
             value: username
         }
 
+        builtin["__chat_id__"] = {
+            type: "variable",
+            signature: "string",
+            value: createActionDto.chat_id
+        }
+
         try {
             const result = await exec(name);
 
@@ -42,7 +48,6 @@ ${JSON.stringify(result, null, 2)}
                 mock: true
             }, username);
         } catch (error) {
-            console.log(error);
             return await this.chatService.tool_prompt({
                 message: `p { "Error from tool" }
 code[lang="text"] {
