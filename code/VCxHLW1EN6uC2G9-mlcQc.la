@@ -1,7 +1,0 @@
-import lib;
-
-use lib::notion::auth::{ login };
-
-fun main(): string {
-    return login();
-}

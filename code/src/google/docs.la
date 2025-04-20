@@ -1,0 +1,22 @@
+/*
+input:
+{ requestBody: { title: 'Hello Dafifi' } }
+
+output: 
+{
+    "kind": "drive#file",
+    "id": "11mNI5rrHyqs9NXhQ3IGR1k9IHHP3iLa_KTEB8n4N1EQ",
+    "name": "docs",
+    "mimeType": "application/vnd.google-apps.document"
+}
+*/
+fun new_doc(name: string): string {
+    return __docs_new_doc__(name);
+}
+
+/*
+
+*/
+fun get_raw(id: string): string {
+    return __docs_get_raw__(id);
+}

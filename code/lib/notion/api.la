@@ -1,3 +1,0 @@
-fun search(config: Map<string, string>): unit {
-    return __notion_search__(config);
-}

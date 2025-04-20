@@ -1,0 +1,59 @@
+/*
+input:
+    {
+        q: "filter",
+        pageSize: page_size,
+        fields: 'files(name, id)'
+    }
+
+output:
+[
+  {
+    "id": "11mNI5rrHyqs9NXhQ3IGR1k9IHHP3iLa_KTEB8n4N1EQ",
+    "name": "docs"
+  },
+  {
+    "id": "1oYam78_wcVurn_IH9VYoEJjy-VCEsjna",
+    "name": "Dafifi"
+  },
+  {
+    "id": "1elb9sQQc87HS0Dk_leFCdsOnMYqX3mOQtq5Voua9Sv4",
+    "name": "Dafifi"
+  },
+  {
+    "id": "1t9LwInK7L9Psa0KvynZe6Liwb8X7k-EosInZxRbySkU",
+    "name": "Hello Dafifi"
+  },
+  {
+    "id": "1dNP2jqJ1LYNns_Xka-zHjpZhm0ePosu6",
+    "name": "My New Folder"
+  },
+  {
+    "id": "1nY1FZB5hFKk1pZbELK2Uh8Zpz0XrMSTVVrZ04vgVSx4",
+    "name": "Job Application"
+  },
+  {
+    "id": "11cPLNu1s8V-04C246MGKPfbNMZfYJ2foHME3708KDOM",
+    "name": "Job Application (Responses)"
+  }
+]
+*/
+fun list(config: Map<string, string>): string {
+    return __drive_list__(config);
+}
+
+/*
+input:
+name: folder
+
+output: 
+{
+    "kind": "drive#file",
+    "id": "1dNP2jqJ1LYNns_Xka-zHjpZhm0ePosu6",
+    "name": "My New Folder",
+    "mimeType": "application/vnd.google-apps.folder"
+}
+*/
+fun mkdir(name: string): string {
+    return __drive_new_folder__(name);
+}

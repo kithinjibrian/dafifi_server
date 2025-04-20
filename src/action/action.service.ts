@@ -15,8 +15,8 @@ export class ActionService {
 
     async create(createActionDto: CreateActionDto, username: string) {
         let filename = nanoid();
-        let name = `code/${filename}.la`;
-        await writeFile(name, createActionDto.code);
+        let filepath = `code/src/${filename}.la`;
+        await writeFile(filepath, createActionDto.code);
 
         builtin["__username__"] = {
             type: "variable",
@@ -31,7 +31,12 @@ export class ActionService {
         }
 
         try {
-            const result = await exec(name);
+            const result = await exec({
+                filepath
+            });
+
+            delete builtin.__username__;
+            delete builtin.__chat_id__;
 
             let res = `p { "Result from tool." }
 code[lang="text"] {
@@ -62,7 +67,7 @@ ${error.message}
                 mock: true
             }, username)
         } finally {
-            await rename(name, `dead/${filename}.la`)
+            await rename(filepath, `dead/${filename}.la`)
         }
     }
 

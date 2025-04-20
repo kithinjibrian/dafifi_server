@@ -1,0 +1,11 @@
+fun list(config: Map<string, string>): string {
+    return __gmail_list__(config);
+}
+
+fun read(id: string): string {
+    return __gmail_read__(id);
+}
+
+fun send(config: Map<string, string>): string {
+    return __gmail_send__(config);
+}

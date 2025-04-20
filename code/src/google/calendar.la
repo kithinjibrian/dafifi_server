@@ -1,0 +1,14 @@
+/*
+input:
+{
+    maxResults: 10,
+    singleEvents: true,
+}
+*/
+fun list(config: Map<string, string>): string {
+    return __calendar_list__(config);
+}
+
+fun create(): string {
+    return __calendar_create__();
+}

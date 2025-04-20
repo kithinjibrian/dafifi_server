@@ -185,7 +185,7 @@ export class ChatService {
 
             await this.messageRepository.save(toolMessage);
 
-            return toolMessage;
+            return message;
         } catch (error) {
             console.log(error);
 

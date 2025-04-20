@@ -1,5 +1,8 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as gmail from '@googleapis/gmail';
+import * as drive from '@googleapis/drive';
+import * as docs from '@googleapis/docs';
+import * as calendar from '@googleapis/calendar';
 import { get_credentials } from 'src/utils/google';
 import { Db } from 'src/utils/db';
 import { nanoid } from 'nanoid';
@@ -10,6 +13,8 @@ import { builtin } from "@kithinji/tlugha"
 import { RedisService } from 'src/redis/redis.service';
 import { NotionToken } from 'src/notion/entities/notion.entity';
 import { Client } from "@notionhq/client"
+import * as hubspot from '@hubspot/api-client'
+import { HubspotToken } from 'src/hubspot/entities/hubspot.entity';
 
 @Injectable()
 export class BuiltinService implements OnModuleInit {
@@ -18,6 +23,8 @@ export class BuiltinService implements OnModuleInit {
         private gtokenRepository: Repository<GToken>,
         @InjectRepository(NotionToken)
         private notionTokenRepository: Repository<NotionToken>,
+        @InjectRepository(HubspotToken)
+        private hubspotTokenRepository: Repository<HubspotToken>,
         private readonly redisService: RedisService
     ) { }
 
@@ -44,14 +51,18 @@ export class BuiltinService implements OnModuleInit {
                     prompt: 'consent',
                     scope: [
                         'https://www.googleapis.com/auth/gmail.readonly',
-                        'https://www.googleapis.com/auth/gmail.send'
+                        'https://www.googleapis.com/auth/gmail.send',
+                        'https://www.googleapis.com/auth/drive',
+                        'https://www.googleapis.com/auth/documents',
+                        'https://www.googleapis.com/auth/calendar',
+                        'https://www.googleapis.com/auth/calendar.events',
                     ],
                     state: id,
                 });
             }
         };
 
-        builtin["__google_list__"] = {
+        builtin["__gmail_list__"] = {
             type: "function",
             async: true,
             signature: "<T, U>(args: T) -> U",
@@ -95,7 +106,7 @@ export class BuiltinService implements OnModuleInit {
                         return { id: msg.id, subject, from };
                     }));
 
-                    return email_summaries;
+                    return JSON.stringify(email_summaries);
                 } catch (error) {
                     if (error.message.includes('invalid_grant')) {
                         return 'Token expired, need to re-authenticate the user.'
@@ -105,7 +116,7 @@ export class BuiltinService implements OnModuleInit {
             }
         };
 
-        builtin["__google_read__"] = {
+        builtin["__gmail_read__"] = {
             type: "function",
             async: true,
             signature: "<T, U>(args: T) -> U",
@@ -151,7 +162,7 @@ export class BuiltinService implements OnModuleInit {
             }
         };
 
-        builtin["__google_send__"] = {
+        builtin["__gmail_send__"] = {
             type: "function",
             async: true,
             signature: "<T, U>(args: T) -> U",
@@ -199,9 +210,231 @@ export class BuiltinService implements OnModuleInit {
                         },
                     });
 
-                    return { status: 'sent', id: res.data.id };
+                    return JSON.stringify({ status: 'sent', id: res.data.id });
                 } catch (error) {
                     console.error('Failed to send email:', error);
+                    throw error;
+                }
+            }
+        };
+
+        builtin["__drive_list__"] = {
+            type: "function",
+            async: true,
+            signature: "<T, U>(args: T) -> U",
+            exec: async (args: any[]) => {
+                let token;
+
+                if (builtin.__username__.type === "variable") {
+                    token = await this.gtokenRepository.findOne({
+                        where: { username: builtin.__username__.value }
+                    });
+                }
+
+                if (!token || !token.refresh_token) {
+                    throw new Error('No refresh token found.');
+                }
+
+                try {
+                    oAuth2Client.setCredentials({ refresh_token: token.refresh_token });
+
+                    const dv = drive.drive({ version: 'v3', auth: oAuth2Client });
+
+                    const response = await dv.files.list(args[0]);
+
+                    const files = response.data.files;
+
+                    return JSON.stringify(files);
+                } catch (error) {
+                    throw error;
+                }
+            }
+        };
+
+        builtin["__drive_new_folder__"] = {
+            type: "function",
+            async: true,
+            signature: "<T, U>(args: T) -> U",
+            exec: async (args: any[]) => {
+                let token;
+
+                if (builtin.__username__.type === "variable") {
+                    token = await this.gtokenRepository.findOne({
+                        where: { username: builtin.__username__.value }
+                    });
+                }
+
+                if (!token || !token.refresh_token) {
+                    throw new Error('No refresh token found.');
+                }
+
+                try {
+                    oAuth2Client.setCredentials({ refresh_token: token.refresh_token });
+
+                    const dv = drive.drive({ version: 'v3', auth: oAuth2Client });
+
+                    const res = await dv.files.create({
+                        requestBody: {
+                            name: args[0],
+                            mimeType: 'application/vnd.google-apps.folder',
+                        },
+                    })
+
+                    return JSON.stringify(res.data);
+                } catch (error) {
+                    throw error;
+                }
+            }
+        };
+
+        builtin["__docs_new_doc__"] = {
+            type: "function",
+            async: true,
+            signature: "<T, U>(args: T) -> U",
+            exec: async (args: any[]) => {
+                let token;
+
+                if (builtin.__username__.type === "variable") {
+                    token = await this.gtokenRepository.findOne({
+                        where: { username: builtin.__username__.value }
+                    });
+                }
+
+                if (!token || !token.refresh_token) {
+                    throw new Error('No refresh token found.');
+                }
+
+                try {
+                    oAuth2Client.setCredentials({ refresh_token: token.refresh_token });
+
+                    const dv = drive.drive({ version: 'v3', auth: oAuth2Client });
+
+                    const res = await dv.files.create({
+                        requestBody: {
+                            name: args[0],
+                            mimeType: 'application/vnd.google-apps.document',
+                        },
+                    })
+
+                    return JSON.stringify(res.data);
+                } catch (error) {
+                    throw error;
+                }
+            }
+        };
+
+        builtin["__docs_get_raw__"] = {
+            type: "function",
+            async: true,
+            signature: "<T, U>(args: T) -> U",
+            exec: async (args: any[]) => {
+                let token;
+
+                if (builtin.__username__.type === "variable") {
+                    token = await this.gtokenRepository.findOne({
+                        where: { username: builtin.__username__.value }
+                    });
+                }
+
+                if (!token || !token.refresh_token) {
+                    throw new Error('No refresh token found.');
+                }
+
+                try {
+                    oAuth2Client.setCredentials({ refresh_token: token.refresh_token });
+
+                    const ds = docs.docs({ version: 'v1', auth: oAuth2Client });
+
+                    const res = await ds.documents.get({ documentId: args[0] })
+
+                    return JSON.stringify(res.data);
+                } catch (error) {
+                    throw error;
+                }
+            }
+        };
+
+        // not working
+        builtin["__calendar_list__"] = {
+            type: "function",
+            async: true,
+            signature: "<T, U>(args: T) -> U",
+            exec: async (args: any[]) => {
+                let token;
+
+                if (builtin.__username__.type === "variable") {
+                    token = await this.gtokenRepository.findOne({
+                        where: { username: builtin.__username__.value }
+                    });
+                }
+
+                if (!token || !token.refresh_token) {
+                    throw new Error('No refresh token found.');
+                }
+
+                try {
+                    oAuth2Client.setCredentials({ refresh_token: token.refresh_token });
+
+                    const cl = calendar.calendar({ version: 'v3', auth: oAuth2Client });
+
+                    const res = await cl.events.list({
+                        calendarId: 'primary',
+                        timeMin: (new Date()).toISOString(),
+                        orderBy: 'startTime',
+                        ...args[0]
+                    })
+
+                    return JSON.stringify(res.data);
+                } catch (error) {
+                    throw error;
+                }
+            }
+        };
+
+        // not working
+        builtin["__calendar_create__"] = {
+            type: "function",
+            async: true,
+            signature: "<T, U>(args: T) -> U",
+            exec: async (args: any[]) => {
+                let token;
+
+                if (builtin.__username__.type === "variable") {
+                    token = await this.gtokenRepository.findOne({
+                        where: { username: builtin.__username__.value }
+                    });
+                }
+
+                if (!token || !token.refresh_token) {
+                    throw new Error('No refresh token found.');
+                }
+
+                try {
+                    oAuth2Client.setCredentials({ refresh_token: token.refresh_token });
+
+                    const cl = calendar.calendar({ version: 'v3', auth: oAuth2Client });
+
+                    const event = {
+                        summary: 'Meeting with GPT',
+                        location: 'Online',
+                        description: 'Talking to ChatGPT about Node.js and Google APIs',
+                        start: {
+                            dateTime: '2025-04-18T10:00:00-07:00',
+                            timeZone: 'America/Los_Angeles',
+                        },
+                        end: {
+                            dateTime: '2025-04-18T11:00:00-07:00',
+                            timeZone: 'America/Los_Angeles',
+                        },
+                    };
+
+                    const res = await cl.events.insert({
+                        calendarId: 'primary',
+                        requestBody: event,
+                    });
+
+                    return JSON.stringify(res.data);
+                } catch (error) {
                     throw error;
                 }
             }
@@ -252,6 +485,66 @@ export class BuiltinService implements OnModuleInit {
                 const databases = await notion.search(args[0]);
 
                 return JSON.stringify(databases.results, null, 2);
+            }
+        };
+
+        builtin["__hubspot_login__"] = {
+            type: "function",
+            async: true,
+            signature: "<T, U>(args: T) -> U",
+            exec: async (args: any[]) => {
+                const id = nanoid();
+
+                if (
+                    builtin["__username__"].type == "variable" &&
+                    builtin["__chat_id__"].type == "variable"
+                ) {
+                    await this.redisService.set(id, JSON.stringify({
+                        username: builtin["__username__"].value,
+                        chat_id: builtin["__chat_id__"].value
+                    }));
+                }
+
+                let hubspotClient = new hubspot.Client();
+
+                const clientId = process.env.HUBSPOT_CLIENT_ID!
+                const redirectUri = process.env.HUBSPOT_REDIRECT_URI!
+                const scope = 'oauth crm.objects.contacts.read'
+
+                return hubspotClient.oauth.getAuthorizationUrl(clientId, redirectUri, scope)
+            }
+        };
+
+        builtin["__hubspot__"] = {
+            type: "function",
+            async: true,
+            signature: "<T, U>(args: T) -> U",
+            exec: async (args: any[]) => {
+                let token;
+
+                if (
+                    builtin["__username__"].type == "variable"
+                ) {
+                    token = await this.hubspotTokenRepository.findOne({
+                        where: { username: builtin.__username__.value }
+                    });
+                }
+
+                let hubspotClient = new hubspot.Client();
+
+                const results = await hubspotClient.oauth.tokensApi
+                    .create(
+                        'refresh_token',
+                        undefined,
+                        undefined,
+                        process.env.HUBSPOT_CLIENT_ID!,
+                        process.env.HUBSPOT_CLIENT_SECRET!,
+                        token.refresh_token
+                    );
+
+                hubspotClient.setAccessToken(results.accessToken)
+
+                return await hubspotClient.crm.contacts.basicApi.getPage()
             }
         };
     }

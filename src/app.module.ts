@@ -13,6 +13,8 @@ import { BuiltinModule } from './builtin/builtin.module';
 import { MessageModule } from './message/message.module';
 import { NotionModule } from './notion/notion.module';
 import { RedisModule } from './redis/redis.module';
+import { HubspotModule } from './hubspot/hubspot.module';
+import { LughaModule } from './lugha/lugha.module';
 
 @Module({
     imports: [
@@ -25,7 +27,9 @@ import { RedisModule } from './redis/redis.module';
         BuiltinModule,
         MessageModule,
         NotionModule,
+        HubspotModule,
         RedisModule,
+        LughaModule,
         ConfigModule.forRoot({
             isGlobal: true,
         }),

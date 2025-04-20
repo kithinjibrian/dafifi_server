@@ -20,8 +20,12 @@
         "test:e2e": "jest --config ./test/jest-e2e.json"
     },
     "dependencies": {
+        "@googleapis/calendar": "^9.8.0",
+        "@googleapis/docs": "^3.3.3",
+        "@googleapis/drive": "^11.0.0",
         "@googleapis/gmail": "^12.0.0",
-        "@kithinji/tlugha": "^1.0.5",
+        "@hubspot/api-client": "^12.0.1",
+        "@kithinji/tlugha": "^1.0.14",
         "@nestjs/common": "^11.0.1",
         "@nestjs/config": "^4.0.2",
         "@nestjs/core": "^11.0.1",
