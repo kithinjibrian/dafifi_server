@@ -1,11 +1,10 @@
 import { nanoid } from 'nanoid';
-import { writeFile, appendFile, rename } from 'fs/promises';
+import { writeFile, rename } from 'fs/promises';
 import { Injectable } from '@nestjs/common';
-import { exec } from "@kithinji/tlugha"
+import { exec, builtin } from "@kithinji/tlugha-node"
 import { CreateActionDto } from './dto/create-action.dto';
 import { UpdateActionDto } from './dto/update-action.dto';
 import { ChatService } from 'src/chat/chat.service';
-import { builtin } from '@kithinji/tlugha'
 
 @Injectable()
 export class ActionService {

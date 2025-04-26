@@ -3,9 +3,11 @@ import { GoogleService } from './google.service';
 import { GoogleController } from './google.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GToken } from './entities/google.entity';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
     imports: [
+        RedisModule,
         TypeOrmModule.forFeature([
             GToken,
         ])

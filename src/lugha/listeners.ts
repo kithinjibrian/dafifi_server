@@ -1,11 +1,14 @@
 import {
+    builtin
+} from "@kithinji/tlugha-node";
+
+import {
+    Module,
     ASTNode,
-    ASTVisitor,
     Extension,
+    ASTVisitor,
     FunctionDecNode,
-    builtin,
-    Module
-} from "@kithinji/tlugha";
+} from "@kithinji/tlugha-core";
 
 import { nanoid } from 'nanoid';
 

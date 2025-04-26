@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ExtensionStore } from "@kithinji/tlugha"
+import { ExtensionStore } from "@kithinji/tlugha-core"
 import { Listeners } from './listeners';
 
 @Injectable()

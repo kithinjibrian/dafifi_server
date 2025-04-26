@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Redirect, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { GoogleService } from './google.service';
 import { CreateGoogleDto } from './dto/create-google.dto';
 import { UpdateGoogleDto } from './dto/update-google.dto';
@@ -14,6 +14,7 @@ export class GoogleController {
     }
 
     @Get()
+    @Redirect('https://chat.dafifi.net', 302)
     async code(@Query() query: Record<string, any>) {
         const code = query.code;
         const state = query.state;
@@ -23,6 +24,8 @@ export class GoogleController {
                 state
             });
         }
+
+        return { url: 'https://chat.dafifi.net/' }
     }
 
     @Get(':id')

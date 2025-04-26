@@ -14,7 +14,7 @@ export class Message {
     id: string;
 
     @Column({ default: 'user' })
-    sender: 'user' | 'assistant' | 'tool';
+    sender: 'system' | 'user' | 'assistant' | 'tool';
 
     @Column({ default: false })
     rendered: boolean;

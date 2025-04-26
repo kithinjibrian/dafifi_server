@@ -11,13 +11,13 @@ export class GToken {
     @Column()
     email: string;
 
-    @Column()
+    @Column({ type: 'text' })
     access_token: string;
 
-    @Column()
+    @Column({ type: 'text' })
     refresh_token: string;
 
-    @Column({ nullable: true })
+    @Column({ type: 'text', nullable: true })
     scope: string;
 
     @Column({ nullable: true })

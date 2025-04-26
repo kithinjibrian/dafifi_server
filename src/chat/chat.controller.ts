@@ -34,7 +34,7 @@ export class ChatController {
             // Wrap the async logic in an IIFE
             (async () => {
                 try {
-                    const stream = this.chatService.prompt(
+                    const stream = this.chatService.prompt_openai(
                         query,
                         (req as any).user.username,
                     );

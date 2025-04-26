@@ -4,12 +4,11 @@ import * as drive from '@googleapis/drive';
 import * as docs from '@googleapis/docs';
 import * as calendar from '@googleapis/calendar';
 import { get_credentials } from 'src/utils/google';
-import { Db } from 'src/utils/db';
 import { nanoid } from 'nanoid';
 import { GToken } from 'src/google/entities/google.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { builtin } from "@kithinji/tlugha"
+import { builtin } from "@kithinji/tlugha-node"
 import { RedisService } from 'src/redis/redis.service';
 import { NotionToken } from 'src/notion/entities/notion.entity';
 import { Client } from "@notionhq/client"
@@ -29,6 +28,10 @@ export class BuiltinService implements OnModuleInit {
     ) { }
 
     onModuleInit() {
+        delete builtin["__shell__"];
+        delete builtin["__write__"];
+        delete builtin["__read__"];
+
         const credentials = get_credentials();
         const { client_id, client_secret, redirect_uris } = credentials.web;
         const oAuth2Client = new gmail.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
@@ -39,11 +42,15 @@ export class BuiltinService implements OnModuleInit {
             signature: "<T, U>(args: T) -> U",
             exec: async (args: any[]) => {
                 const id = nanoid();
-                const db = Db.get_instance();
 
-                if (builtin.__username__.type == "variable") {
-                    db.set(id, { username: builtin.__username__.value });
-                    db.set(builtin.__username__.value, id);
+                if (
+                    builtin["__username__"].type == "variable" &&
+                    builtin["__chat_id__"].type == "variable"
+                ) {
+                    await this.redisService.set(id, JSON.stringify({
+                        username: builtin["__username__"].value,
+                        chat_id: builtin["__chat_id__"].value
+                    }));
                 }
 
                 return oAuth2Client.generateAuthUrl({

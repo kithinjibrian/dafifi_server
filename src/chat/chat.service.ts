@@ -7,6 +7,8 @@ import { Repository } from 'typeorm';
 import { Chat } from './entities/chat.entity';
 import { UsersService } from 'src/users/users.service';
 import { Message } from 'src/message/entities/message.entity';
+import OpenAI from 'openai';
+
 
 enum Sender {
     User = 'user',
@@ -17,6 +19,7 @@ enum Sender {
 export class ChatService {
     private token: string | null = null;
     private tokenExpiration: number | null = null;
+    private openai;
 
     constructor(
         @InjectRepository(Chat)
@@ -25,6 +28,9 @@ export class ChatService {
         private messageRepository: Repository<Message>,
         private usersService: UsersService
     ) {
+        this.openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY,
+        });
     }
 
     private capitalize(str) {
@@ -81,7 +87,173 @@ export class ChatService {
         }
     }
 
-    async *prompt(createMessageDto: CreateMessageDto, username: string): AsyncGenerator<string> {
+    async *prompt_openai(createMessageDto: CreateMessageDto, username: string): AsyncGenerator<string> {
+        const { id, message, sender, time, chat_id } = createMessageDto;
+
+        try {
+            // 1. Get or create the chat
+            const chat = await this.getChat(chat_id, message.slice(0, 20), username);
+
+            // 2. Save the user's message or fetch tool message
+            let utMessage;
+            if (sender === 'user') {
+                utMessage = this.messageRepository.create({
+                    message,
+                    sender,
+                    time,
+                    chat: { id: chat.id },
+                });
+                await this.messageRepository.save(utMessage);
+            } else if (sender === 'tool') {
+                utMessage = await this.messageRepository.findOne({ where: { id } });
+            }
+
+            // 3. Build OpenAI-compatible message array
+            const msgs = await this.findOne(chat.id, username);
+            const chatMessages = msgs.messages.map((msg) => {
+                if (msg.sender === 'tool') {
+                    return {
+                        role: 'assistant' as const,
+                        content: msg.message
+                    };
+                }
+
+                return {
+                    role: msg.sender as 'user' | 'assistant' | 'system',
+                    content: msg.message,
+                };
+            });
+
+            const prompt_system = `p {
+"You are an AI assistant called Dafifi designed to engage in interactive dialogue with users and tools."
+"Your goal is to assist users by answering questions, offering suggestions, and guiding them through tasks using the available tools."
+"You are responsive, helpful, and adaptable to the user's needs."
+"Whenever a user requests action from a specific tool, you will use Lugha code to interact with the tool and await a response from it."
+"You basically have access to the Lugha interpreter. Use it to your advantage. Any value returned from the main function will be accessible in the conversation."
+"All of your response should be strictly formatted using LML."
+"Be cautious about generating lugha code with run=\"true\" because it will be run automatically and might have adverse effects if you do something wrong"
+}
+
+p { "You've access to this tools:" }
+
+p { "google login - help user connect their google accounts with Dafifi." }
+
+code[lang="lugha", run="true", tools="google"] {
+\`import google;
+
+use google::auth::{ login };
+
+fun main(): string {
+    return login();
+}
+\`
+}
+
+p { "google list - list emails." }
+
+code[lang="lugha", run="true", tools="google"] {
+\`import google;
+
+use google::gmail::{ list };
+
+fun main(): string {
+    // q depends on what the user wants. vary this accordingly
+    return list({q: "is:unread", max_results: 10});
+}
+\`
+}
+
+p { "google read - read an email using its id." }
+
+code[lang="lugha", run="true", tools="google"] {
+\`import google;
+
+use google::gmail::{ read };
+
+fun main(): string {
+    // replace with the emails actual id
+    return read("[EMAIL_ID]");
+}
+\`
+}
+
+p { "google send - send an email." }
+
+code[lang="lugha", run="true", tools="google"] {
+\`import google;
+
+use google::gmail::{ send };
+
+fun main(): string {
+    // make sure you ask for these details from the user before sending the email
+    // Also make sure you confirm from the user if they want to go ahead and send the email
+    return send({
+        to: "[RECIPIENTS_EMAIL]",
+        subject: "[EMAIL_SUBJECT]",
+        body: "[EMAIL_BODY]"
+    });
+}
+\`
+}
+
+p { "Always aim to make the experience smooth and efficient while maintaining a conversational tone." }
+`
+            const system = {
+                role: "system" as const,
+                content: prompt_system
+            };
+
+            chatMessages.unshift(system);
+
+            // 4. Create a new assistant message in DB (empty for now)
+            const aiMessage = this.messageRepository.create({
+                message: '',
+                sender: 'assistant',
+                time,
+                chat: { id: chat.id },
+            });
+
+            await this.messageRepository.save(aiMessage);
+
+            // 5. Yield initial IDs
+            yield JSON.stringify({
+                chat_id: chat.id,
+                umessage_id: utMessage.id,
+                imessage_id: aiMessage.id,
+            }) + '\n';
+
+            // 6. Stream response from OpenAI
+            const stream = await this.openai.chat.completions.create({
+                model: 'ft:gpt-4o-mini-2024-07-18:dafifi:dafifi:BOxGakJs',
+                messages: chatMessages,
+                stream: true,
+            });
+
+            let ai_response = '';
+
+            for await (const chunk of stream) {
+                const delta = chunk.choices?.[0]?.delta?.content ?? '';
+                ai_response += delta;
+
+                yield JSON.stringify({
+                    message_id: aiMessage.id,
+                    chunk: delta,
+                }) + '\n';
+            }
+
+            // 7. Save full assistant response in DB
+            aiMessage.message = ai_response;
+            await this.messageRepository.save(aiMessage);
+        } catch (error) {
+            console.error('❌ Error in prompt():', error);
+            throw new HttpException(
+                'An error occurred while processing the message',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+    async * prompt(createMessageDto: CreateMessageDto, username: string): AsyncGenerator<string> {
         const { id, message, sender, time, chat_id, mock } = createMessageDto;
 
         try {
@@ -185,7 +357,7 @@ export class ChatService {
 
             await this.messageRepository.save(toolMessage);
 
-            return message;
+            return toolMessage;
         } catch (error) {
             console.log(error);
 
@@ -289,33 +461,3 @@ export class ChatService {
         }
     }
 }
-
-/*
-
- let ai_response = '';
-            response.data.on('data', async (chunk) => {
-                try {
-                    const chunkStr = chunk.toString();
-                    ai_response += chunkStr;
-
-                    stream.push(
-                        JSON.stringify({
-                            message_id: aiMessage.id,
-                            chunk: chunkStr,
-                        }) + "\n"
-                    );
-
-                } catch (e) {
-                    console.log(e)
-                    stream.push(null);
-                }
-
-            });
-
-            response.data.on('end', () => {
-                aiMessage.message = ai_response;
-                this.messageRepository.save(aiMessage);
-
-                stream.push(null);
-            });
-*/
