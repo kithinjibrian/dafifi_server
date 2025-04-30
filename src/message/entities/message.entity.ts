@@ -1,11 +1,12 @@
 import { Chat } from 'src/chat/entities/chat.entity';
 import {
     Entity,
-    PrimaryGeneratedColumn,
     Column,
     ManyToOne,
     JoinColumn,
-    CreateDateColumn
+    CreateDateColumn,
+    UpdateDateColumn,
+    PrimaryGeneratedColumn,
 } from 'typeorm';
 
 @Entity('message')
@@ -16,14 +17,11 @@ export class Message {
     @Column({ default: 'user' })
     sender: 'system' | 'user' | 'assistant' | 'tool';
 
-    @Column({ default: false })
-    rendered: boolean;
-
     @Column('text')
     message: string;
 
-    @Column('text', { nullable: true })
-    time?: string;
+    @Column({ default: 0 })
+    tokens: number;
 
     @ManyToOne(() => Chat, (chat) => chat.messages, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'chatId' })
@@ -31,4 +29,7 @@ export class Message {
 
     @CreateDateColumn()
     createdAt: Date;
+
+    @UpdateDateColumn()
+    updatedAt: Date;
 }

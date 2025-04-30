@@ -15,6 +15,8 @@ import { NotionModule } from './notion/notion.module';
 import { RedisModule } from './redis/redis.module';
 import { HubspotModule } from './hubspot/hubspot.module';
 import { LughaModule } from './lugha/lugha.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { OpenAIModule } from './openai/openai.module';
 
 @Module({
     imports: [
@@ -30,6 +32,7 @@ import { LughaModule } from './lugha/lugha.module';
         HubspotModule,
         RedisModule,
         LughaModule,
+        OpenAIModule,
         ConfigModule.forRoot({
             isGlobal: true,
         }),
@@ -47,6 +50,23 @@ import { LughaModule } from './lugha/lugha.module';
                 synchronize: true // ⚠️ Change to false in production
             }),
         }),
+        ThrottlerModule.forRoot([
+            {
+                name: 'short',
+                ttl: 1000,
+                limit: 10,
+            },
+            {
+                name: 'medium',
+                ttl: 10000,
+                limit: 30
+            },
+            {
+                name: 'long',
+                ttl: 60000,
+                limit: 100
+            }
+        ]),
     ],
     controllers: [AppController],
     providers: [AppService],

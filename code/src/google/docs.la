@@ -11,12 +11,12 @@ output:
 }
 */
 fun new_doc(name: string): string {
-    return __docs_new_doc__(name);
+    return builtin::__docs_new_doc__(name);
 }
 
 /*
 
 */
 fun get_raw(id: string): string {
-    return __docs_get_raw__(id);
+    return builtin::__docs_get_raw__(id);
 }

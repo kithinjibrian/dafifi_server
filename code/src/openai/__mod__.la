@@ -1,0 +1,7 @@
+fun save(api_key: string): string {
+    return builtin::__openai_save__(api_key);
+}
+
+fun prompt(prompt: string): string {
+    return builtin::__openai_prompt__(prompt);
+}

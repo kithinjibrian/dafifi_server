@@ -13,12 +13,6 @@ export class CreateMessageDto {
 
     @IsString()
     message: string;
-
-    @IsString()
-    time: string;
-
-    @IsBoolean()
-    mock: boolean;
 }
 
 export class DeleteChatsDto {

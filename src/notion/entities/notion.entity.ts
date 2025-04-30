@@ -1,4 +1,3 @@
-// notion-token.entity.ts
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('notion_tokens')

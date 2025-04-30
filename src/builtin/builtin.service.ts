@@ -3,6 +3,7 @@ import * as gmail from '@googleapis/gmail';
 import * as drive from '@googleapis/drive';
 import * as docs from '@googleapis/docs';
 import * as calendar from '@googleapis/calendar';
+import OpenAI from 'openai';
 import { get_credentials } from 'src/utils/google';
 import { nanoid } from 'nanoid';
 import { GToken } from 'src/google/entities/google.entity';
@@ -14,6 +15,7 @@ import { NotionToken } from 'src/notion/entities/notion.entity';
 import { Client } from "@notionhq/client"
 import * as hubspot from '@hubspot/api-client'
 import { HubspotToken } from 'src/hubspot/entities/hubspot.entity';
+import { OpenAI as OpenAIEntity } from 'src/openai/entities/openai.entity';
 
 @Injectable()
 export class BuiltinService implements OnModuleInit {
@@ -24,6 +26,8 @@ export class BuiltinService implements OnModuleInit {
         private notionTokenRepository: Repository<NotionToken>,
         @InjectRepository(HubspotToken)
         private hubspotTokenRepository: Repository<HubspotToken>,
+        @InjectRepository(OpenAIEntity)
+        private openaiRepository: Repository<OpenAIEntity>,
         private readonly redisService: RedisService
     ) { }
 
@@ -554,5 +558,124 @@ export class BuiltinService implements OnModuleInit {
                 return await hubspotClient.crm.contacts.basicApi.getPage()
             }
         };
+
+        builtin["__openai_save__"] = {
+            type: "function",
+            async: true,
+            signature: "<T, U>(args: T) -> U",
+            exec: async (args: any[]) => {
+                const a = args[0];
+                if ("api_key" in a &&
+                    "model" in a
+                ) {
+                    if (
+                        builtin["__username__"].type == "variable"
+                    ) {
+
+                        const openai = this.openaiRepository.create({
+                            api_key: a.api_key,
+                            model: a.model,
+                            username: builtin.__username__.value
+                        })
+
+                        await this.openaiRepository.save(openai);
+
+                        return "OpenAI info has been securely saved.";
+                    }
+
+                    return JSON.stringify({
+                        success: "error",
+                        message: "Auth error"
+                    })
+                }
+
+                return JSON.stringify({
+                    success: "error",
+                    message: "The input object is missing either api_key or model field"
+                })
+            }
+        }
+
+        builtin["__openai_update__"] = {
+            type: "function",
+            async: true,
+            signature: "<T, U>(args: T) -> U",
+            exec: async (args: any[]) => {
+                const a = args[0];
+
+                if (
+                    "api_key" in a || "model" in a
+                ) {
+                    if (builtin["__username__"].type === "variable") {
+                        const username = builtin.__username__.value;
+
+                        const existing = await this.openaiRepository.findOne({
+                            where: { username }
+                        });
+
+                        if (!existing) {
+                            return JSON.stringify({
+                                success: "error",
+                                message: "No saved OpenAI info found for this user."
+                            });
+                        }
+
+                        // Update fields
+                        if ("api_key" in a) existing.api_key = a.api_key;
+                        if ("model" in a) existing.model = a.model;
+
+                        await this.openaiRepository.save(existing);
+
+                        return "OpenAI info has been successfully updated.";
+                    }
+
+                    return JSON.stringify({
+                        success: "error",
+                        message: "Auth error"
+                    });
+                }
+
+                return JSON.stringify({
+                    success: "error",
+                    message: "Must provide at least one of api_key or model to update."
+                });
+            }
+        }
+
+        builtin["__openai_prompt__"] = {
+            type: "function",
+            async: true,
+            signature: "<T, U>(args: T) -> U",
+            exec: async (args: any[]) => {
+                let info;
+
+                if (
+                    builtin["__username__"].type == "variable"
+                ) {
+                    try {
+                        info = await this.openaiRepository.findOne({
+                            where: { username: builtin.__username__.value }
+                        });
+                    } catch (e) {
+                        throw e;
+                    }
+                }
+
+                const openai = new OpenAI({
+                    apiKey: info.api_key,
+                });
+
+                try {
+                    const response = await openai.chat.completions.create({
+                        model: info.model,
+                        messages: args[0]
+                    });
+
+                    return response.choices[0].message.content;
+                } catch (e) {
+                    throw e;
+                }
+            }
+        }
     }
 }

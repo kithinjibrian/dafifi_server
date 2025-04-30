@@ -5,6 +5,7 @@ import { GToken } from 'src/google/entities/google.entity';
 import { RedisModule } from 'src/redis/redis.module';
 import { NotionToken } from 'src/notion/entities/notion.entity';
 import { HubspotToken } from 'src/hubspot/entities/hubspot.entity';
+import { OpenAI } from 'src/openai/entities/openai.entity';
 
 @Module({
     imports: [
@@ -12,7 +13,8 @@ import { HubspotToken } from 'src/hubspot/entities/hubspot.entity';
         TypeOrmModule.forFeature([
             GToken,
             NotionToken,
-            HubspotToken
+            HubspotToken,
+            OpenAI
         ])
     ],
     providers: [BuiltinService],

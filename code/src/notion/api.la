@@ -1,3 +1,3 @@
 fun search(config: Map<string, string>): string {
-    return __notion_search__(config);
+    return builtin::__notion_search__(config);
 }

@@ -6,9 +6,9 @@ input:
 }
 */
 fun list(config: Map<string, string>): string {
-    return __calendar_list__(config);
+    return builtin::__calendar_list__(config);
 }
 
 fun create(): string {
-    return __calendar_create__();
+    return builtin::__calendar_create__();
 }

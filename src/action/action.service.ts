@@ -31,7 +31,10 @@ export class ActionService {
 
         try {
             const result = await exec({
-                filepath
+                filepath,
+                config: {
+                    call_main: true
+                }
             });
 
             delete builtin.__username__;
@@ -47,9 +50,7 @@ ${JSON.stringify(result, null, 2)}
             return await this.chatService.tool_prompt({
                 message: result ? res : "p { \"Tool returned empty result!\" }",
                 sender: "tool",
-                chat_id: createActionDto.chat_id,
-                time: "",
-                mock: true
+                chat_id: createActionDto.chat_id
             }, username);
         } catch (error) {
             return await this.chatService.tool_prompt({
@@ -61,9 +62,7 @@ ${error.message}
 }
 `,
                 sender: "tool",
-                chat_id: createActionDto.chat_id,
-                time: "",
-                mock: true
+                chat_id: createActionDto.chat_id
             }, username)
         } finally {
             await rename(filepath, `dead/${filename}.la`)

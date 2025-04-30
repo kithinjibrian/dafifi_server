@@ -55,5 +55,5 @@ output:
 }
 */
 fun mkdir(name: string): string {
-    return __drive_new_folder__(name);
+    return builtin::__drive_new_folder__(name);
 }

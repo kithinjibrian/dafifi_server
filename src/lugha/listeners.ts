@@ -16,8 +16,14 @@ let listeners: Record<string, any> = {};
 
 export class Listeners extends Extension<ASTVisitor> {
     public name = "listeners";
+    public step = 0;
 
-    async before_accept(node: ASTNode) { }
+    async before_accept(node: ASTNode) {
+        switch (node.type) {
+            case "CallExpression":
+                this.step++;
+        }
+    }
 
     async after_main({ root }: { root: Module }) {
         if (!("__username__" in builtin) ||

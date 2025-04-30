@@ -9,6 +9,10 @@ import { UsersService } from 'src/users/users.service';
 import { Message } from 'src/message/entities/message.entity';
 import OpenAI from 'openai';
 
+import {
+    encode,
+    isWithinTokenLimit,
+} from 'gpt-tokenizer'
 
 enum Sender {
     User = 'user',
@@ -53,11 +57,26 @@ export class ChatService {
         return this.token;
     }
 
-    private async createNewChat(title: string, username: string): Promise<Chat> {
+    private async generateTitleFromInput(message) {
+        const response = await this.openai.chat.completions.create({
+            model: process.env.OPEN_AI_MODEL,
+            messages: [
+                { role: 'system', content: `Format your response as LML paragraph. Example: p { "[CHAT_TITLE]" }. Limit yourself to strictly less than 10 words.` },
+                { role: 'user', content: `Please generate a short title for this conversation: "${message}"` },
+            ],
+        });
+
+        const title = response.choices[0].message.content;
+        return title;
+    }
+
+    private async createNewChat(message: string, username: string): Promise<Chat> {
         const user = await this.usersService.findOne(username);
         if (!user) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND);
         }
+
+        const title = await this.generateTitleFromInput(message);
 
         const chat = this.chatRepository.create({
             title,
@@ -88,19 +107,20 @@ export class ChatService {
     }
 
     async *prompt_openai(createMessageDto: CreateMessageDto, username: string): AsyncGenerator<string> {
-        const { id, message, sender, time, chat_id } = createMessageDto;
+        const { id, message, sender, chat_id } = createMessageDto;
 
         try {
             // 1. Get or create the chat
-            const chat = await this.getChat(chat_id, message.slice(0, 20), username);
+            const chat = await this.getChat(chat_id, message, username);
 
             // 2. Save the user's message or fetch tool message
             let utMessage;
             if (sender === 'user') {
+
                 utMessage = this.messageRepository.create({
                     message,
                     sender,
-                    time,
+                    tokens: encode(message).length,
                     chat: { id: chat.id },
                 });
                 await this.messageRepository.save(utMessage);
@@ -134,63 +154,80 @@ export class ChatService {
 "Be cautious about generating lugha code with run=\"true\" because it will be run automatically and might have adverse effects if you do something wrong"
 }
 
-p { "You've access to this tools:" }
+p { "You've access to this tools" }
 
-p { "google login - help user connect their google accounts with Dafifi." }
+p { "OpenAI prompt tool" }
 
-code[lang="lugha", run="true", tools="google"] {
-\`import google;
+code[lang="lugha", run="true", tools="openai"] {
+\`import openai;
 
-use google::auth::{ login };
+use openai::{ prompt };
 
 fun main(): string {
-    return login();
+    return prompt([
+        {role: "user", content: "[USER'S_PROMPT_HERE]"}
+    ]);
 }
 \`
 }
 
-p { "google list - list emails." }
+p { "OpenAI save tool" }
 
-code[lang="lugha", run="true", tools="google"] {
-\`import google;
+code[lang="lugha", run="true", tools="openai"] {
+\`import openai;
 
-use google::gmail::{ list };
+use openai::{ save };
 
 fun main(): string {
-    // q depends on what the user wants. vary this accordingly
-    return list({q: "is:unread", max_results: 10});
+    // make sure you ask the user for api key and model info you take this action
+    return save({
+        api_key: "[OPENAI_APIKEY]"
+        model: "[USER'S_MODEL]"
+    });
 }
 \`
 }
 
-p { "google read - read an email using its id." }
+p { "OpenAI update tool - The user can update either the api key or model or both" }
 
-code[lang="lugha", run="true", tools="google"] {
-\`import google;
+code[lang="lugha", run="true", tools="openai"] {
+\`import openai;
 
-use google::gmail::{ read };
+use openai::{ save };
 
 fun main(): string {
-    // replace with the emails actual id
-    return read("[EMAIL_ID]");
+    // Totally valid
+    return save({
+        api_key: "[OPENAI_APIKEY]"
+    });
 }
 \`
 }
 
-p { "google send - send an email." }
+code[lang="lugha", run="true", tools="openai"] {
+\`import openai;
 
-code[lang="lugha", run="true", tools="google"] {
-\`import google;
-
-use google::gmail::{ send };
+use openai::{ save };
 
 fun main(): string {
-    // make sure you ask for these details from the user before sending the email
-    // Also make sure you confirm from the user if they want to go ahead and send the email
-    return send({
-        to: "[RECIPIENTS_EMAIL]",
-        subject: "[EMAIL_SUBJECT]",
-        body: "[EMAIL_BODY]"
+    // Totally valid
+    return save({
+        model: "[USER'S_MODEL]"
+    });
+}
+\`
+}
+
+code[lang="lugha", run="true", tools="openai"] {
+\`import openai;
+
+use openai::{ save };
+
+fun main(): string {
+    // Totally valid
+    return save({
+        api_key: "[OPENAI_APIKEY]"
+        model: "[USER'S_MODEL]"
     });
 }
 \`
@@ -209,7 +246,6 @@ p { "Always aim to make the experience smooth and efficient while maintaining a 
             const aiMessage = this.messageRepository.create({
                 message: '',
                 sender: 'assistant',
-                time,
                 chat: { id: chat.id },
             });
 
@@ -220,11 +256,13 @@ p { "Always aim to make the experience smooth and efficient while maintaining a 
                 chat_id: chat.id,
                 umessage_id: utMessage.id,
                 imessage_id: aiMessage.id,
+                ucreated_at: utMessage.createdAt,
+                icreated_at: aiMessage.createdAt,
             }) + '\n';
 
             // 6. Stream response from OpenAI
             const stream = await this.openai.chat.completions.create({
-                model: 'ft:gpt-4o-mini-2024-07-18:dafifi:dafifi:BOxGakJs',
+                model: process.env.OPEN_AI_MODEL,
                 messages: chatMessages,
                 stream: true,
             });
@@ -243,6 +281,7 @@ p { "Always aim to make the experience smooth and efficient while maintaining a 
 
             // 7. Save full assistant response in DB
             aiMessage.message = ai_response;
+            aiMessage.tokens = encode(ai_response).length;
             await this.messageRepository.save(aiMessage);
         } catch (error) {
             console.error('❌ Error in prompt():', error);
@@ -253,97 +292,8 @@ p { "Always aim to make the experience smooth and efficient while maintaining a 
         }
     }
 
-    async * prompt(createMessageDto: CreateMessageDto, username: string): AsyncGenerator<string> {
-        const { id, message, sender, time, chat_id, mock } = createMessageDto;
-
-        try {
-            let chat: Chat = await this.getChat(chat_id, message.slice(0, 20), username);
-            let utMessage;
-
-            if (sender === "user") {
-                utMessage = this.messageRepository.create({
-                    message,
-                    sender,
-                    time,
-                    chat: { id: chat.id },
-                });
-                await this.messageRepository.save(utMessage);
-            } else if (sender === "tool") {
-                utMessage = await this.messageRepository.findOne({
-                    where: {
-                        id
-                    }
-                })
-            }
-
-            const msgs = await this.findOne(chat.id, username);
-            const prompt = msgs.messages.map((msg) => `< | ${this.capitalize(msg.sender)} | > ${msg.message}`).join(" ");
-
-            const aiMessage = this.messageRepository.create({
-                message: '',
-                sender: Sender.Assistant,
-                time,
-                chat: { id: chat.id },
-            });
-
-            await this.messageRepository.save(aiMessage);
-
-            yield JSON.stringify({
-                chat_id: chat.id,
-                umessage_id: utMessage.id,
-                imessage_id: aiMessage.id
-            }) + '\n'
-
-            const response = await fetch("https://kithinji-dafifi.hf.space/mock", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    prompt: message,
-                    max_tokens: 100,
-                    stream: true
-                })
-            })
-
-            const reader = response.body?.getReader();
-            const decoder = new TextDecoder();
-
-            let ai_response = '';
-
-            while (reader) {
-                const { value, done } = await reader.read();
-                if (done) {
-                    break;
-                };
-
-                const chunk = decoder.decode(value);
-
-                if (chunk.trim() === "[DONE]")
-                    break;
-
-                ai_response += chunk;
-
-                yield JSON.stringify({
-                    message_id: aiMessage.id,
-                    chunk,
-                }) + '\n'
-            }
-
-            aiMessage.message = ai_response;
-            await this.messageRepository.save(aiMessage);
-
-        } catch (error) {
-            console.log(error)
-            throw new HttpException(
-                'An error occurred while processing the message',
-                HttpStatus.INTERNAL_SERVER_ERROR
-            );
-        }
-    }
-
     async tool_prompt(createMessageDto: CreateMessageDto, username: string) {
-        const { message, sender, time, chat_id } = createMessageDto;
+        const { message, sender, chat_id } = createMessageDto;
 
         try {
             let chat: Chat = await this.getChat(chat_id, message.slice(0, 20), username);
@@ -351,7 +301,6 @@ p { "Always aim to make the experience smooth and efficient while maintaining a 
             const toolMessage = this.messageRepository.create({
                 message,
                 sender,
-                time,
                 chat: { id: chat.id },
             });
 
@@ -461,3 +410,94 @@ p { "Always aim to make the experience smooth and efficient while maintaining a 
         }
     }
 }
+
+
+/*
+    async * prompt(createMessageDto: CreateMessageDto, username: string): AsyncGenerator<string> {
+        const { id, message, sender, chat_id } = createMessageDto;
+
+        try {
+            let chat: Chat = await this.getChat(chat_id, message.slice(0, 20), username);
+            let utMessage;
+
+            if (sender === "user") {
+                utMessage = this.messageRepository.create({
+                    message,
+                    sender,
+                    chat: { id: chat.id },
+                });
+                await this.messageRepository.save(utMessage);
+            } else if (sender === "tool") {
+                utMessage = await this.messageRepository.findOne({
+                    where: {
+                        id
+                    }
+                })
+            }
+
+            const msgs = await this.findOne(chat.id, username);
+            const prompt = msgs.messages.map((msg) => `< | ${this.capitalize(msg.sender)} | > ${msg.message}`).join(" ");
+
+            const aiMessage = this.messageRepository.create({
+                message: '',
+                sender: Sender.Assistant,
+                chat: { id: chat.id },
+            });
+
+            await this.messageRepository.save(aiMessage);
+
+            yield JSON.stringify({
+                chat_id: chat.id,
+                umessage_id: utMessage.id,
+                imessage_id: aiMessage.id
+            }) + '\n'
+
+            const response = await fetch("https://kithinji-dafifi.hf.space/mock", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: message,
+                    max_tokens: 100,
+                    stream: true
+                })
+            })
+
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+
+            let ai_response = '';
+
+            while (reader) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    break;
+                };
+
+                const chunk = decoder.decode(value);
+
+                if (chunk.trim() === "[DONE]")
+                    break;
+
+                ai_response += chunk;
+
+                yield JSON.stringify({
+                    message_id: aiMessage.id,
+                    chunk,
+                }) + '\n'
+            }
+
+            aiMessage.message = ai_response;
+            await this.messageRepository.save(aiMessage);
+
+        } catch (error) {
+            console.log(error)
+            throw new HttpException(
+                'An error occurred while processing the message',
+                HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+    }
+
+*/
