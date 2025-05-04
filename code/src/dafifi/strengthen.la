@@ -1,0 +1,14 @@
+fun node(
+    id: string,
+    context: string
+): string {
+    return builtin::__dafifi_memory_strengthen_node__(id, type, properties, context);
+}
+
+fun edge(
+    subject: string,
+    object: string,
+    context: string
+): string {
+    return builtin::__dafifi_memory_strengthen_edge__(subject, object, context);
+}

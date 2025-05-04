@@ -1,0 +1,350 @@
+let products = [
+  {
+    "id": 1,
+    "name": "Smart LED TV 55\"",
+    "category": "Television",
+    "priceKES": 91000,
+    "stock": 6,
+    "description": "55-inch 4K Ultra HD Smart LED TV with HDR and streaming apps."
+  },
+  {
+    "id": 2,
+    "name": "Laptop - Core i5, 8GB RAM",
+    "category": "Computers",
+    "priceKES": 84500,
+    "stock": 9,
+    "description": "14-inch laptop with Intel Core i5 processor, 8GB RAM, and 512GB SSD."
+  },
+  {
+    "id": 3,
+    "name": "Bluetooth Speaker",
+    "category": "Audio",
+    "priceKES": 7800,
+    "stock": 20,
+    "description": "Portable waterproof speaker with 12-hour battery life."
+  },
+  {
+    "id": 4,
+    "name": "Smartphone - 128GB",
+    "category": "Mobile Phones",
+    "priceKES": 45500,
+    "stock": 15,
+    "description": "6.5-inch smartphone with 128GB storage and triple camera system."
+  },
+  {
+    "id": 5,
+    "name": "Microwave Oven 20L",
+    "category": "Home Appliances",
+    "priceKES": 11960,
+    "stock": 8,
+    "description": "20-liter capacity microwave with defrost and timer functions."
+  },
+  {
+    "id": 6,
+    "name": "Fridge - Double Door",
+    "category": "Home Appliances",
+    "priceKES": 104000,
+    "stock": 3,
+    "description": "260L double door refrigerator with energy-saving technology."
+  },
+  {
+    "id": 7,
+    "name": "Air Conditioner 12000 BTU",
+    "category": "Home Appliances",
+    "priceKES": 68900,
+    "stock": 4,
+    "description": "Split AC unit with fast cooling and remote control."
+  },
+  {
+    "id": 8,
+    "name": "Washing Machine 7kg",
+    "category": "Home Appliances",
+    "priceKES": 58500,
+    "stock": 6,
+    "description": "Fully automatic front load washing machine with 7kg capacity."
+  },
+  {
+    "id": 9,
+    "name": "Wireless Earbuds",
+    "category": "Audio",
+    "priceKES": 6500,
+    "stock": 30,
+    "description": "Compact earbuds with noise cancellation and touch controls."
+  },
+  {
+    "id": 10,
+    "name": "Smartwatch",
+    "category": "Wearables",
+    "priceKES": 11700,
+    "stock": 12,
+    "description": "Fitness tracking smartwatch with heart rate monitor and notifications."
+  },
+  {
+    "id": 1,
+    "name": "Modern Sofa",
+    "category": "Living Room",
+    "priceKES": 104000,
+    "stock": 10,
+    "description": "A spacious and stylish three-seater sofa with linen upholstery."
+  },
+  {
+    "id": 2,
+    "name": "Dining Table Set",
+    "category": "Dining Room",
+    "priceKES": 155870,
+    "stock": 5,
+    "description": "Solid wood dining table with six matching chairs."
+  },
+  {
+    "id": 3,
+    "name": "Queen Bed Frame",
+    "category": "Bedroom",
+    "priceKES": 77935,
+    "stock": 7,
+    "description": "Sturdy wooden queen-size bed frame with slatted base."
+  },
+  {
+    "id": 4,
+    "name": "Office Desk",
+    "category": "Home Office",
+    "priceKES": 45499,
+    "stock": 12,
+    "description": "Minimalist desk with metal legs and a walnut finish top."
+  },
+  {
+    "id": 5,
+    "name": "Bookshelf",
+    "category": "Living Room",
+    "priceKES": 25870,
+    "stock": 15,
+    "description": "5-tier open shelf perfect for books and décor items."
+  },
+  {
+    "id": 6,
+    "name": "Recliner Chair",
+    "category": "Living Room",
+    "priceKES": 55899,
+    "stock": 8,
+    "description": "Comfortable recliner with plush cushioning and leather cover."
+  },
+  {
+    "id": 7,
+    "name": "Coffee Table",
+    "category": "Living Room",
+    "priceKES": 19499,
+    "stock": 20,
+    "description": "Tempered glass coffee table with a sleek metal frame."
+  },
+  {
+    "id": 8,
+    "name": "Wardrobe Cabinet",
+    "category": "Bedroom",
+    "priceKES": 97370,
+    "stock": 4,
+    "description": "Spacious wardrobe with sliding doors and hanging space."
+  },
+  {
+    "id": 9,
+    "name": "Bar Stools (Set of 2)",
+    "category": "Kitchen",
+    "priceKES": 25999,
+    "stock": 10,
+    "description": "Adjustable height stools with cushioned seats and footrests."
+  },
+  {
+    "id": 10,
+    "name": "TV Stand",
+    "category": "Living Room",
+    "priceKES": 29770,
+    "stock": 9,
+    "description": "Modern TV console with storage drawers and cable management."
+  },
+  {
+    "id": 1,
+    "name": "Men's T-Shirt",
+    "category": "Men's Clothing",
+    "priceKES": 1950,
+    "stock": 25,
+    "size": ["S", "M", "L", "XL"],
+    "description": "100% cotton crew neck t-shirt, available in multiple colors."
+  },
+  {
+    "id": 2,
+    "name": "Women's Maxi Dress",
+    "category": "Women's Clothing",
+    "priceKES": 5200,
+    "stock": 10,
+    "size": ["S", "M", "L"],
+    "description": "Flowy maxi dress with floral prints and adjustable straps."
+  },
+  {
+    "id": 3,
+    "name": "Unisex Hoodie",
+    "category": "Unisex Clothing",
+    "priceKES": 4550,
+    "stock": 18,
+    "size": ["M", "L", "XL", "XXL"],
+    "description": "Fleece-lined hoodie with front pocket and drawstring hood."
+  },
+  {
+    "id": 4,
+    "name": "Men's Denim Jeans",
+    "category": "Men's Clothing",
+    "priceKES": 3900,
+    "stock": 15,
+    "size": ["30", "32", "34", "36"],
+    "description": "Slim fit denim jeans with stretch and five-pocket styling."
+  },
+  {
+    "id": 5,
+    "name": "Women's Blouse",
+    "category": "Women's Clothing",
+    "priceKES": 3250,
+    "stock": 20,
+    "size": ["S", "M", "L"],
+    "description": "Lightweight blouse with puff sleeves and button-down front."
+  },
+  {
+    "id": 6,
+    "name": "Children's Tracksuit",
+    "category": "Children's Clothing",
+    "priceKES": 2600,
+    "stock": 12,
+    "size": ["3-4", "5-6", "6-7"],
+    "description": "Two-piece cotton tracksuit for boys and girls, age 3-7."
+  },
+  {
+    "id": 7,
+    "name": "Men's Formal Shirt",
+    "category": "Men's Clothing",
+    "priceKES": 3900,
+    "stock": 14,
+    "size": ["M", "L", "XL"],
+    "description": "Classic long sleeve button-up shirt, ideal for work or events."
+  },
+  {
+    "id": 8,
+    "name": "Women's Leggings",
+    "category": "Women's Clothing",
+    "priceKES": 1950,
+    "stock": 30,
+    "size": ["S", "M", "L", "XL"],
+    "description": "High-waisted stretch leggings for workouts or casual wear."
+  },
+  {
+    "id": 9,
+    "name": "Kids Pajama Set",
+    "category": "Children's Clothing",
+    "priceKES": 1820,
+    "stock": 22,
+    "size": ["3-4", "5-6", "6-7"],
+    "description": "Soft cotton pajama set with fun cartoon prints."
+  },
+  {
+    "id": 10,
+    "name": "Men's Jacket",
+    "category": "Men's Clothing",
+    "priceKES": 7150,
+    "stock": 9,
+    "size": ["L", "XL", "XXL"],
+    "description": "Windproof jacket with zip-up front and hood for outdoor wear."
+  },
+  {
+    "id": 1,
+    "name": "Liquid Foundation",
+    "category": "Makeup",
+    "priceKES": 2600,
+    "stock": 20,
+    "shade": ["Ivory", "Beige", "Honey", "Chestnut"],
+    "description": "Full-coverage matte liquid foundation suitable for all skin types."
+  },
+  {
+    "id": 2,
+    "name": "Lipstick",
+    "category": "Makeup",
+    "priceKES": 1200,
+    "stock": 50,
+    "shade": ["Ruby Red", "Nude Pink", "Coral", "Plum"],
+    "description": "Long-lasting creamy lipstick with a bold color payoff."
+  },
+  {
+    "id": 3,
+    "name": "Eyeshadow Palette",
+    "category": "Makeup",
+    "priceKES": 3100,
+    "stock": 15,
+    "variant": "12-shade Neutral Palette",
+    "description": "Versatile eyeshadow palette with matte and shimmer finishes."
+  },
+  {
+    "id": 4,
+    "name": "Mascara",
+    "category": "Makeup",
+    "priceKES": 1450,
+    "stock": 30,
+    "variant": "Black Waterproof",
+    "description": "Volumizing waterproof mascara with a curved brush."
+  },
+  {
+    "id": 5,
+    "name": "Compact Powder",
+    "category": "Makeup",
+    "priceKES": 1750,
+    "stock": 25,
+    "shade": ["Light", "Medium", "Dark"],
+    "description": "Pressed powder that controls shine and sets makeup."
+  },
+  {
+    "id": 6,
+    "name": "Liquid Concealer",
+    "category": "Makeup",
+    "priceKES": 1400,
+    "stock": 18,
+    "shade": ["Light", "Sand", "Tan"],
+    "description": "Lightweight concealer for under-eyes and blemishes."
+  },
+  {
+    "id": 7,
+    "name": "Blush",
+    "category": "Makeup",
+    "priceKES": 1300,
+    "stock": 22,
+    "shade": ["Rose", "Peach", "Mauve"],
+    "description": "Buildable powder blush for a natural glow."
+  },
+  {
+    "id": 8,
+    "name": "Highlighter Stick",
+    "category": "Makeup",
+    "priceKES": 1650,
+    "stock": 16,
+    "shade": ["Champagne", "Gold", "Rose Gold"],
+    "description": "Creamy highlighter stick for a radiant shimmer."
+  },
+  {
+    "id": 9,
+    "name": "Setting Spray",
+    "category": "Makeup",
+    "priceKES": 2200,
+    "stock": 12,
+    "variant": "Matte Finish",
+    "description": "Makeup setting spray that locks your look all day."
+  },
+  {
+    "id": 10,
+    "name": "Eyebrow Pencil",
+    "category": "Makeup",
+    "priceKES": 950,
+    "stock": 35,
+    "shade": ["Dark Brown", "Medium Brown", "Black"],
+    "description": "Precision eyebrow pencil with built-in spoolie brush."
+  }
+];
+
+fun search(): Array<string> {
+    return products;
+}
+
+fun add_to_cart(id: string): string {
+    return "item added to cart";
+}

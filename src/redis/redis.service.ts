@@ -25,6 +25,23 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         return await this.client.get(key);
     }
 
+    async delete(key: string): Promise<void> {
+        await this.client.del(key);
+    }
+
+    async get_all_namespace(prefix: string): Promise<string[]> {
+        const keys: string[] = [];
+        let cursor = '0';
+
+        do {
+            const result = await this.client.scan(cursor, 'MATCH', `${prefix}*`, 'COUNT', 100);
+            cursor = result[0];
+            keys.push(...result[1]);
+        } while (cursor !== '0');
+
+        return keys;
+    }
+
     onModuleDestroy() {
         this.client.disconnect();
     }

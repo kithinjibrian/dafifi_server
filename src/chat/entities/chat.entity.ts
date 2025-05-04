@@ -10,6 +10,7 @@ import {
 
 import { User } from "src/users/entities/users.entity";
 import { Message } from "src/message/entities/message.entity";
+import { Task } from "src/task/entities/task.entity";
 
 @Entity('chat')
 export class Chat {
@@ -24,6 +25,9 @@ export class Chat {
 
     @Column({ default: false })
     deleted: boolean;
+
+    @OneToMany(() => Task, (task) => task.chat, { cascade: true })
+    tasks: Task[];
 
     @OneToMany(() => Message, (message) => message.chat, { cascade: true })
     messages: Message[];

@@ -1,0 +1,10 @@
+
+    import cron;
+
+use cron::{ schedule };
+
+fun main(): string {
+    return schedule("*/5 * * * *", fun (): string -> {
+        return "This task is scheduled to run every 5 minutes.";
+    });
+}

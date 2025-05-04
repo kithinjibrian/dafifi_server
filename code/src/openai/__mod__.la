@@ -1,7 +1,11 @@
-fun save(api_key: string): string {
-    return builtin::__openai_save__(api_key);
+fun save(config: Map<string, string>): string {
+    return builtin::__openai_save__(config);
 }
 
-fun prompt(prompt: string): string {
+fun update(config: Map<string, string>): string {
+    return builtin::__openai_update__(config);
+}
+
+fun prompt(prompt: Array<string>): string {
     return builtin::__openai_prompt__(prompt);
 }

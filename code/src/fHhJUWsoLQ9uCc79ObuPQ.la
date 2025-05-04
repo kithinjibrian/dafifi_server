@@ -1,0 +1,9 @@
+import cron;
+
+use cron::{ schedule };
+
+fun main(): string {
+    return schedule("* * * * *", fun (): unit -> {
+        return 30;
+    });
+}

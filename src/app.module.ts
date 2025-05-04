@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ActionModule } from './action/action.module';
 import { ChatModule } from './chat/chat.module';
+import { TaskModule } from './task/task.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -12,11 +13,14 @@ import { GoogleModule } from './google/google.module';
 import { BuiltinModule } from './builtin/builtin.module';
 import { MessageModule } from './message/message.module';
 import { NotionModule } from './notion/notion.module';
+import { LinkedinModule } from './linkedin/linkedin.module';
 import { RedisModule } from './redis/redis.module';
 import { HubspotModule } from './hubspot/hubspot.module';
 import { LughaModule } from './lugha/lugha.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { OpenAIModule } from './openai/openai.module';
+import { MemoryModule } from './memory/memory.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
     imports: [
@@ -33,6 +37,10 @@ import { OpenAIModule } from './openai/openai.module';
         RedisModule,
         LughaModule,
         OpenAIModule,
+        MemoryModule,
+        LinkedinModule,
+        TaskModule,
+        ScheduleModule.forRoot(),
         ConfigModule.forRoot({
             isGlobal: true,
         }),

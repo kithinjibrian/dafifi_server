@@ -39,7 +39,7 @@ output:
 ]
 */
 fun list(config: Map<string, string>): string {
-    return __drive_list__(config);
+    return builtin::__drive_list__(config);
 }
 
 /*

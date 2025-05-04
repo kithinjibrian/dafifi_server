@@ -1,0 +1,15 @@
+fun schedule(expression: string, cb: Function): string {
+    return builtin::__cron_schedule__(expression, cb);
+}
+
+fun list(): string {
+    return builtin::__cron_list__();
+}
+
+fun start(id: string): string {
+    return builtin::__cron_start__(id);
+}
+
+fun stop(id: string): string {
+    return builtin::__cron_stop__(id);
+}

@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DeleteChatsDto, CreateMessageDto, StarChatsDto } from './dto/create-chat.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
@@ -7,22 +6,17 @@ import { Repository } from 'typeorm';
 import { Chat } from './entities/chat.entity';
 import { UsersService } from 'src/users/users.service';
 import { Message } from 'src/message/entities/message.entity';
+import { TaskService } from 'src/task/task.service';
 import OpenAI from 'openai';
 
 import {
     encode,
     isWithinTokenLimit,
 } from 'gpt-tokenizer'
-
-enum Sender {
-    User = 'user',
-    Assistant = 'assistant',
-}
+import { ContextService } from './context.service';
 
 @Injectable()
 export class ChatService {
-    private token: string | null = null;
-    private tokenExpiration: number | null = null;
     private openai;
 
     constructor(
@@ -30,31 +24,13 @@ export class ChatService {
         private chatRepository: Repository<Chat>,
         @InjectRepository(Message)
         private messageRepository: Repository<Message>,
-        private usersService: UsersService
+        private usersService: UsersService,
+        private contextService: ContextService,
+        private readonly taskService: TaskService,
     ) {
         this.openai = new OpenAI({
             apiKey: process.env.OPENAI_API_KEY,
         });
-    }
-
-    private capitalize(str) {
-        return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-
-    private async getAuthToken() {
-        const currentTime = Date.now();
-        if (this.token && this.tokenExpiration && currentTime < this.tokenExpiration) {
-            return this.token; // Token is still valid
-        }
-
-        const tokenResponse = await axios.post("https://kithinji-dafifi.hf.space/login", {
-            username: "kithinji",
-            password: "password",
-        });
-
-        this.token = tokenResponse.data.access_token;
-        this.tokenExpiration = currentTime + (tokenResponse.data.expires_in * 1000); // Expiry time
-        return this.token;
     }
 
     private async generateTitleFromInput(message) {
@@ -130,117 +106,12 @@ export class ChatService {
 
             // 3. Build OpenAI-compatible message array
             const msgs = await this.findOne(chat.id, username);
-            const chatMessages = msgs.messages.map((msg) => {
-                if (msg.sender === 'tool') {
-                    return {
-                        role: 'assistant' as const,
-                        content: msg.message
-                    };
-                }
+            const chatMessages = msgs.messages.map((msg) => ({
+                role: msg.sender === 'tool' ? 'assistant' : msg.sender,
+                content: msg.message,
+            }));
 
-                return {
-                    role: msg.sender as 'user' | 'assistant' | 'system',
-                    content: msg.message,
-                };
-            });
-
-            const prompt_system = `p {
-"You are an AI assistant called Dafifi designed to engage in interactive dialogue with users and tools."
-"Your goal is to assist users by answering questions, offering suggestions, and guiding them through tasks using the available tools."
-"You are responsive, helpful, and adaptable to the user's needs."
-"Whenever a user requests action from a specific tool, you will use Lugha code to interact with the tool and await a response from it."
-"You basically have access to the Lugha interpreter. Use it to your advantage. Any value returned from the main function will be accessible in the conversation."
-"All of your response should be strictly formatted using LML."
-"Be cautious about generating lugha code with run=\"true\" because it will be run automatically and might have adverse effects if you do something wrong"
-}
-
-p { "You've access to this tools" }
-
-p { "OpenAI prompt tool" }
-
-code[lang="lugha", run="true", tools="openai"] {
-\`import openai;
-
-use openai::{ prompt };
-
-fun main(): string {
-    return prompt([
-        {role: "user", content: "[USER'S_PROMPT_HERE]"}
-    ]);
-}
-\`
-}
-
-p { "OpenAI save tool" }
-
-code[lang="lugha", run="true", tools="openai"] {
-\`import openai;
-
-use openai::{ save };
-
-fun main(): string {
-    // make sure you ask the user for api key and model info you take this action
-    return save({
-        api_key: "[OPENAI_APIKEY]"
-        model: "[USER'S_MODEL]"
-    });
-}
-\`
-}
-
-p { "OpenAI update tool - The user can update either the api key or model or both" }
-
-code[lang="lugha", run="true", tools="openai"] {
-\`import openai;
-
-use openai::{ save };
-
-fun main(): string {
-    // Totally valid
-    return save({
-        api_key: "[OPENAI_APIKEY]"
-    });
-}
-\`
-}
-
-code[lang="lugha", run="true", tools="openai"] {
-\`import openai;
-
-use openai::{ save };
-
-fun main(): string {
-    // Totally valid
-    return save({
-        model: "[USER'S_MODEL]"
-    });
-}
-\`
-}
-
-code[lang="lugha", run="true", tools="openai"] {
-\`import openai;
-
-use openai::{ save };
-
-fun main(): string {
-    // Totally valid
-    return save({
-        api_key: "[OPENAI_APIKEY]"
-        model: "[USER'S_MODEL]"
-    });
-}
-\`
-}
-
-p { "Always aim to make the experience smooth and efficient while maintaining a conversational tone." }
-`
-            const system = {
-                role: "system" as const,
-                content: prompt_system
-            };
-
-            chatMessages.unshift(system);
+            const ctx = await this.contextService.create(username, chatMessages)
 
             // 4. Create a new assistant message in DB (empty for now)
             const aiMessage = this.messageRepository.create({
@@ -263,7 +134,7 @@ p { "Always aim to make the experience smooth and efficient while maintaining a 
             // 6. Stream response from OpenAI
             const stream = await this.openai.chat.completions.create({
                 model: process.env.OPEN_AI_MODEL,
-                messages: chatMessages,
+                messages: ctx,
                 stream: true,
             });
 
@@ -324,7 +195,8 @@ p { "Always aim to make the experience smooth and efficient while maintaining a 
         }
 
         return this.chatRepository.find({
-            where: { user: { id: user.id }, deleted: false }
+            where: { user: { id: user.id }, deleted: false },
+            relations: [ "tasks" ]
         });
     }
 
@@ -336,6 +208,7 @@ p { "Always aim to make the experience smooth and efficient while maintaining a 
 
         const chat = await this.chatRepository.createQueryBuilder('chat')
             .leftJoinAndSelect('chat.messages', 'messages')
+            .leftJoinAndSelect('chat.tasks', 'tasks')
             .where('chat.deleted = :del', { del: false })
             .andWhere('chat.id = :id', { id })
             .andWhere('chat.user.id = :userId', { userId: user.id })
@@ -361,6 +234,7 @@ p { "Always aim to make the experience smooth and efficient while maintaining a 
 
         const chats = await this.chatRepository.find({
             where: { user: { id: user.id } },
+            relations: [ "tasks" ]
         });
 
         const _chats = chats.filter(chat =>
@@ -380,6 +254,11 @@ p { "Always aim to make the experience smooth and efficient while maintaining a 
 
             for (let chat of chatsToDelete) {
                 chat.deleted = true
+
+                for(let task of chat.tasks) {
+                    await this.taskService.update(task.id, { state: "stopped" })
+                }
+
                 await this.chatRepository.save(chat);
             }
 

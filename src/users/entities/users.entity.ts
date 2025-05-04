@@ -1,11 +1,14 @@
 import { Chat } from "src/chat/entities/chat.entity";
+import { Memory } from "src/memory/entities/memory.entity";
 import {
     Column,
     CreateDateColumn,
     Entity,
     OneToMany,
     PrimaryGeneratedColumn,
-    UpdateDateColumn
+    UpdateDateColumn,
+    OneToOne,
+    JoinColumn
 } from "typeorm";
 
 @Entity('user')
@@ -24,6 +27,10 @@ export class User {
 
     @OneToMany(() => Chat, chat => chat.user)
     chats: Chat[]
+
+    @OneToOne(() => Memory, { cascade: true })
+    @JoinColumn()
+    memory: Memory;
 
     @CreateDateColumn()
     createdAt: Date;

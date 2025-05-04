@@ -1,0 +1,3 @@
+fun login(): string {
+    return builtin::__linkedin_login__();
+}

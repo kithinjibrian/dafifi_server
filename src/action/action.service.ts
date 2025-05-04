@@ -17,6 +17,12 @@ export class ActionService {
         let filepath = `code/src/${filename}.la`;
         await writeFile(filepath, createActionDto.code);
 
+        builtin["__file__"] = {
+            type: "variable",
+            signature: "string",
+            value: `${filename}.la`
+        }
+
         builtin["__username__"] = {
             type: "variable",
             signature: "string",
@@ -36,9 +42,6 @@ export class ActionService {
                     call_main: true
                 }
             });
-
-            delete builtin.__username__;
-            delete builtin.__chat_id__;
 
             let res = `p { "Result from tool." }
 code[lang="text"] {
@@ -65,7 +68,9 @@ ${error.message}
                 chat_id: createActionDto.chat_id
             }, username)
         } finally {
-            await rename(filepath, `dead/${filename}.la`)
+            delete builtin.__file__;
+            delete builtin.__username__;
+            delete builtin.__chat_id__;
         }
     }
 

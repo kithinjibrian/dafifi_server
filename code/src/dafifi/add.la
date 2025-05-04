@@ -1,0 +1,17 @@
+fun node(
+    id: string, 
+    type: string, 
+    properties: Record<string, string>,
+    context: string
+): string {
+    return builtin::__dafifi_memory_add_node__(id, type, properties, context);
+}
+
+fun edge(
+    subject: string,
+    predicate: string,
+    object: string,
+    context: string
+): string {
+    return builtin::__dafifi_memory_add_edge__(subject, predicate, object, context);
+}
